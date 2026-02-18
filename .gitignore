@@ -1,0 +1,104 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Artifacts & Data
+artifacts/
+*.joblib
+*.pkl
+*.h5
+*.pth
+*.onnx
+*.csv
+*.wav
+*.mp3
+*.ogg
+*.png
+*.jpg
+*.jpeg
+
+# Keep directory structure
+!artifacts/.gitkeep
+!artifacts/dataset/.gitkeep
+!artifacts/trained_models/.gitkeep
+!artifacts/preprocessed_data/.gitkeep
+!artifacts/labeled_data/.gitkeep
+!artifacts/reports/.gitkeep
+!artifacts/logs/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Static files (except necessary ones)
+frontend/static/uploads/
+
+# Model cache
+model_cache/
+cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
