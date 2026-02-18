@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBFusionAI - FAQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%232563eb' d='M464 256c0-80.1-40.4-142.1-98-175.7c-17.6-10.3-37-17.1-57-20.2V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V60.1c-20 3.1-39.4 9.9-57 20.2C130.4 113.9 90 175.9 90 256c0 10.1 .5 20.1 1.5 30c-11.8 12.3-19.5 28.5-20.9 46.5c-3.1 39.1 13.9 77.7 44.1 103.5c11.9 10.2 21.2 23.3 27 38c1.3 3.3 4.4 5.4 7.9 5.7c38.1 3 118.4-18.1 127.4-85.3c.6-4.5 4.3-7.8 8.9-8.1l1.1-.1 1.1 .1c4.5 .3 8.3 3.6 8.9 8.1c9 67.2 89.3 88.3 127.4 85.3c3.5-.3 6.6-2.4 7.9-5.7c5.8-14.7 15.1-27.8 27-38c30.1-25.8 47.1-64.4 44.1-103.5c-1.4-18-9-34.1-20.9-46.5c1-9.9 1.5-19.9 1.5-30z'/></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-lungs"></i>
+                <span>TBFusionAI</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/prediction" class="nav-link">Prediction</a></li>
+                <li><a href="/faq" class="nav-link active">FAQ</a></li>
+                <li><a href="/api/docs" class="nav-link" target="_blank">API Docs</a></li>
+            </ul>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FAQ Hero -->
+    <section class="faq-hero">
+        <div class="container">
+            <h1 class="page-title">Frequently Asked Questions</h1>
+            <p class="page-subtitle">
+                Everything you need to know about TBFusionAI
+            </p>
+        </div>
+    </section>
+
+    <!-- FAQ Content -->
+    <section class="faq-section">
+        <div class="container">
+            <div class="faq-container">
+                <!-- General Questions -->
+                <div class="faq-category">
+                    <h2 class="category-title">
+                        <i class="fas fa-info-circle"></i> General Questions
+                    </h2>
+                    
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>What is TBFusionAI?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>
+                                TBFusionAI is an AI-powered tuberculosis screening tool that analyzes cough sounds 
+                                and clinical features to provide rapid TB screening results. It uses advanced machine 
+                                learning models including Wav2Vec2 for audio feature extraction and an ensemble of 
+                                gradient boosting models (CatBoost, XGBoost, LightGBM) for prediction.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Is TBFusionAI a diagnostic tool?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>
+                                <strong>No.</strong> TBFusionAI is a screening tool, NOT a diagnostic device. It is 
+                                designed to support healthcare professionals in identifying patients who may need 
+                                further TB testing. Clinical diagnosis of TB requires confirmatory laboratory testing 
+                                including sputum microscopy, culture, or molecular tests (e.g., GeneXpert).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>How accurate is TBFusionAI?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>
+                                TBFusionAI achieves a recall rate of 95% and an F1 score of 92% on validation data. 
+                                The model is specifically optimized to minimize false negatives (missing TB cases), 
+                                making it effective for screening purposes. However, like all AI systems, it has 
+                                limitations and should be used as a supportive tool alongside clinical judgment.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>Who developed TBFusionAI?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>
+                                TBFusionAI was developed by AHFID AI Labs, leveraging the CODA TB dataset and 
+                                state-of-the-art machine learning techniques. The project aims to make TB screening 
+                                more accessible, especially in resource-limited settings.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Questions -->
+                <div class="faq-category">
+                    <h2 class="category-title">
+                        <i class="fas fa-cog"></i> Technical Questions
+                    </h2>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>What technology powers TBFusionAI?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>TBFusionAI uses several advanced technologies:</p>
+                            <ul>
+                                <li><strong>Wav2Vec2:</strong> Facebook's pre-trained model for audio feature extraction</li>
+                                <li><strong>Ensemble Models:</strong> Combination of CatBoost, XGBoost, and LightGBM</li>
+                                <li><strong>Cost-Sensitive Learning:</strong> Optimized to minimize false negatives</li>
+                                <li><strong>Audio Processing:</strong> Librosa and noisereduce for preprocessing</li>
+                                <li><strong>FastAPI:</strong> Modern web framework for the API</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>What audio formats are supported?</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p>
+                                TBFusionAI supports WAV, MP3, and OGG audio formats. The audio should be:
+                            </p>
+                            <ul>
+                                <li>Minimum duration: 1 second</li>
+                                <li>Maximum file size:10MB</li>
+<li>Recommended: 16kHz sample rate</li>
+<li>Clear cough sound without excessive background noise</li>
+</ul>
+</div>
+</div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How long does analysis take?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Analysis typically takes 20-30 seconds, including:
+                        </p>
+                        <ul>
+                            <li>Audio preprocessing and feature extraction: ~10-15 seconds</li>
+                            <li>Model inference: ~5-10 seconds</li>
+                            <li>Result generation: ~1-2 seconds</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is there an API available?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Yes! TBFusionAI provides a RESTful API for integration into other systems. 
+                            Visit the <a href="/api/docs" target="_blank">API documentation</a> for details on:
+                        </p>
+                        <ul>
+                            <li>Authentication</li>
+                            <li>Endpoint specifications</li>
+                            <li>Request/response formats</li>
+                            <li>Code examples in multiple languages</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Questions -->
+            <div class="faq-category">
+                <h2 class="category-title">
+                    <i class="fas fa-user"></i> Usage Questions
+                </h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>What information do I need to provide?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>For accurate screening, you need to provide:</p>
+                        <ul>
+                            <li><strong>Audio:</strong> Cough recording</li>
+                            <li><strong>Demographics:</strong> Age and sex</li>
+                            <li><strong>Symptoms:</strong> Cough duration, fever, weight loss, night sweats, hemoptysis</li>
+                            <li><strong>History:</strong> Prior TB history</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How do I interpret the results?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Results include:</p>
+                        <ul>
+                            <li><strong>Prediction:</strong> "Probable TB" or "Unlikely TB"</li>
+                            <li><strong>Probability:</strong> 0-100% confidence in the prediction</li>
+                            <li><strong>Confidence Level:</strong> High, Medium, or Uncertain</li>
+                            <li><strong>Recommendation:</strong> Suggested next steps</li>
+                        </ul>
+                        <p>
+                            <strong>Important:</strong> Always consult a healthcare professional regardless of 
+                            the screening result.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>What should I do if the result is "Probable TB"?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            If the screening indicates "Probable TB", you should:
+                        </p>
+                        <ol>
+                            <li>Consult a healthcare professional immediately</li>
+                            <li>Undergo confirmatory TB testing (sputum test, chest X-ray, etc.)</li>
+                            <li>Follow medical advice regarding isolation and treatment</li>
+                            <li>Inform close contacts who may need screening</li>
+                        </ol>
+                        <p>
+                            Remember: This is a screening tool, not a diagnosis. Only laboratory tests can 
+                            confirm TB infection.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Can I use TBFusionAI for children?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            TBFusionAI can process data for individuals of all ages (0-120 years). However, 
+                            the model was trained primarily on adult data, so results for children should be 
+                            interpreted with additional caution. Pediatric TB diagnosis often requires 
+                            specialized expertise and additional considerations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Security -->
+            <div class="faq-category">
+                <h2 class="category-title">
+                    <i class="fas fa-shield-alt"></i> Privacy & Security
+                </h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is my data stored?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Audio files are processed in real-time and are NOT permanently stored on our servers. 
+                            Clinical information is used only for the prediction and is not retained after the 
+                            session ends. We prioritize user privacy and data security.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is TBFusionAI HIPAA compliant?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            The current version of TBFusionAI is a research tool and demonstration platform. 
+                            For clinical deployment requiring HIPAA compliance, additional security measures 
+                            and compliance certifications would need to be implemented. Contact us for 
+                            enterprise deployment options.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Can I access my previous results?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Currently, results are not saved between sessions. We recommend printing or saving 
+                            your results immediately after receiving them. Future versions may include user 
+                            accounts with result history.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support -->
+            <div class="faq-category">
+                <h2 class="category-title">
+                    <i class="fas fa-question-circle"></i> Support
+                </h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>I'm getting an error. What should I do?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Common issues and solutions:</p>
+                        <ul>
+                            <li><strong>File upload error:</strong> Ensure your audio file is under 10MB and in WAV/MP3/OGG format</li>
+                            <li><strong>Validation error:</strong> Check that all required fields are filled correctly</li>
+                            <li><strong>Timeout:</strong> Reload the page and try again with a shorter audio file</li>
+                            <li><strong>Connection error:</strong> Check your internet connection</li>
+                        </ul>
+                        <p>If problems persist, please contact support.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How can I report a bug or suggest a feature?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            We welcome feedback! You can:
+                        </p>
+                        <ul>
+                            <li>Open an issue on our <a href="https://github.com/AHFIDAILabs/tbfusionai" target="_blank">GitHub repository</a></li>
+                            <li>Contact us via email</li>
+                            <li>Submit feedback through the web interface</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is TBFusionAI open source?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>
+                            Yes! TBFusionAI is open source and available on 
+                            <a href="https://github.com/AHFIDAILabs/tbfusionai" target="_blank">GitHub</a>. 
+                            We encourage contributions from the community to improve TB screening worldwide.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="faq-cta">
+            <h2>Still have questions?</h2>
+            <p>Contact our support team for assistance</p>
+            <a href="mailto:info@ahfid.org" class="btn btn-primary">
+                <i class="fas fa-envelope"></i> Contact Support
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3 class="footer-title">
+                    <i class="fas fa-lungs"></i> TBFusionAI
+                </h3>
+                <p class="footer-description">
+                    AI-powered tuberculosis detection using advanced cough sound analysis 
+                    and machine learning.
+                </p>
+            </div>
+            <div class="footer-section">
+                <h4 class="footer-heading">Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/prediction">Prediction</a></li>
+                    <li><a href="/faq">FAQ</a></li>
+                    <li><a href="/api/docs" target="_blank">API Documentation</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4 class="footer-heading">Resources</h4>
+                <ul class="footer-links">
+                    <li><a href="https://github.com/AHFIDAILabs/tbfusionai" target="_blank">GitHub</a></li>
+                    <li><a href="#">Research Paper</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4 class="footer-heading">Disclaimer</h4>
+                <p class="footer-text">
+                    TBFusionAI is an AI-assisted screening tool and NOT a diagnostic device. 
+                    Results should always be verified by qualified healthcare professionals.
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AHFID AI Labs. All rights reserved.</p>
+            <p>Version 1.0.0</p>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', path='/js/app.js') }}"></script>
+<script>
+    // Initialize FAQ functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        initFAQ();
+    });
+</script>
+</body>
+</html>

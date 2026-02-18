@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBFusionAI - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%232563eb' d='M464 256c0-80.1-40.4-142.1-98-175.7c-17.6-10.3-37-17.1-57-20.2V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V60.1c-20 3.1-39.4 9.9-57 20.2C130.4 113.9 90 175.9 90 256c0 10.1 .5 20.1 1.5 30c-11.8 12.3-19.5 28.5-20.9 46.5c-3.1 39.1 13.9 77.7 44.1 103.5c11.9 10.2 21.2 23.3 27 38c1.3 3.3 4.4 5.4 7.9 5.7c38.1 3 118.4-18.1 127.4-85.3c.6-4.5 4.3-7.8 8.9-8.1l1.1-.1 1.1 .1c4.5 .3 8.3 3.6 8.9 8.1c9 67.2 89.3 88.3 127.4 85.3c3.5-.3 6.6-2.4 7.9-5.7c5.8-14.7 15.1-27.8 27-38c30.1-25.8 47.1-64.4 44.1-103.5c-1.4-18-9-34.1-20.9-46.5c1-9.9 1.5-19.9 1.5-30z'/></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-lungs"></i>
+                <span>TBFusionAI</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link active">Home</a></li>
+                <li><a href="/prediction" class="nav-link">Prediction</a></li>
+                <li><a href="/faq" class="nav-link">FAQ</a></li>
+                <li><a href="/api/docs" class="nav-link" target="_blank">API Docs</a></li>
+            </ul>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        AI-Powered TB Detection
+                        <span class="highlight">Using Cough Analysis</span>
+                    </h1>
+                    <p class="hero-description">
+                        TBFusionAI leverages advanced machine learning and audio analysis to provide 
+                        rapid, accurate tuberculosis screening through cough sound analysis.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="/prediction" class="btn btn-primary">
+                            <i class="fas fa-microphone"></i> Start Screening
+                        </a>
+                        <a href="/faq" class="btn btn-secondary">
+                            <i class="fas fa-question-circle"></i> Learn More
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">95%</div>
+                            <div class="stat-label">Recall Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">92%</div>
+                            <div class="stat-label">F1 Score</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">&lt;30s</div>
+                            <div class="stat-label">Analysis Time</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="{{ url_for('static', path='/images/home_image.png') }}" alt="TB Detection Illustration">
+                    <div class="floating-card card-1">
+                        <i class="fas fa-brain"></i>
+                        <span>AI Analysis</span>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i class="fas fa-waveform"></i>
+                        <span>Audio Processing</span>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Real-time Results</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why Choose TBFusionAI?</h2>
+                <p class="section-subtitle">
+                    Advanced technology for accessible TB screening
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="feature-title">Rapid Analysis</h3>
+                    <p class="feature-description">
+                        Get results in under 30 seconds using advanced ensemble models 
+                        with cost-sensitive threshold optimization.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="feature-title">High Accuracy</h3>
+                    <p class="feature-description">
+                        95% recall rate minimizes false negatives, ensuring that 
+                        potential TB cases are not missed.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Easy to Use</h3>
+                    <p class="feature-description">
+                        Simple interface requiring only a cough recording and basic 
+                        clinical information for screening.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Privacy First</h3>
+                    <p class="feature-description">
+                        Audio data is processed securely and not stored permanently, 
+                        ensuring patient privacy and data security.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="feature-title">AI-Powered</h3>
+                    <p class="feature-description">
+                        Utilizes Wav2Vec2 for audio feature extraction and ensemble 
+                        of gradient boosting models (CatBoost, XGBoost, LightGBM).
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <h3 class="feature-title">Clinical Support</h3>
+                    <p class="feature-description">
+                        Provides confidence levels and recommendations to support 
+                        clinical decision-making, not replace it.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">How It Works</h2>
+                <p class="section-subtitle">
+                    Simple 4-step process for TB screening
+                </p>
+            </div>
+            <div class="steps-container">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Record Cough</h3>
+                        <p class="step-description">
+                            Upload or record a cough sample (minimum 1 second, WAV/MP3 format).
+                        </p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Enter Information</h3>
+                        <p class="step-description">
+                            Provide basic clinical information (age, symptoms, medical history).
+                        </p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">AI Analysis</h3>
+                        <p class="step-description">
+                            Advanced AI models analyze audio features and clinical data.
+                        </p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Get Results</h3>
+                        <p class="step-description">
+                            Receive instant screening results with confidence levels and recommendations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2 class="cta-title">Ready to Start Screening?</h2>
+                <p class="cta-description">
+                    Try TBFusionAI now for rapid, accurate TB screening
+                </p>
+                <a href="/prediction" class="btn btn-light btn-large">
+                    <i class="fas fa-arrow-right"></i> Start Now
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">
+                        <i class="fas fa-lungs"></i> TBFusionAI
+                    </h3>
+                    <p class="footer-description">
+                        AI-powered tuberculosis detection using advanced cough sound analysis and machine learning.
+                    </p>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-heading">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/prediction">Prediction</a></li>
+                        <li><a href="/faq">FAQ</a></li>
+                        <li><a href="/api/docs" target="_blank">API Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-heading">Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/AHFIDAILabs/tbfusionai" target="_blank">GitHub</a></li>
+                        <li><a href="#">Research Paper</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-heading">Disclaimer</h4>
+                    <p class="footer-text">
+                        TBFusionAI is an AI-assisted screening tool and NOT a diagnostic device. 
+                        Results should always be verified by qualified healthcare professionals.
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AHFID AI Labs. All rights reserved.</p>
+                <p>Version 1.0.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', path='/js/app.js') }}"></script>
+</body>
+</html>
