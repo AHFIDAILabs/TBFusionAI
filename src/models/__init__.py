@@ -1,0 +1,19 @@
+"""
+Model components for TBFusionAI.
+
+Contains:
+- Preprocessor: Feature preprocessing and audio processing
+- Ensemble Model: Advanced ensemble strategies
+- Predictor: High-level prediction interface
+"""
+
+from src.models.preprocessor import AudioPreprocessor, FeaturePreprocessor
+from src.models.ensemble_model import EnsembleModel
+from src.models.predictor import TBPredictor
+
+__all__ = [
+    "AudioPreprocessor",
+    "FeaturePreprocessor",
+    "EnsembleModel",
+    "TBPredictor"
+]
