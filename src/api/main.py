@@ -37,7 +37,7 @@ app = FastAPI(
     version=config.api.app_version,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
 )
 
 # Add CORS middleware
@@ -68,15 +68,15 @@ else:
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors."""
     logger.warning(f"Validation error: {exc.errors()}")
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=ErrorResponse(
             error="ValidationError",
             message="Invalid request data",
             detail=str(exc.errors()),
-            timestamp=datetime.now().isoformat()
-        ).dict()
+            timestamp=datetime.now().isoformat(),
+        ).dict(),
     )
 
 
@@ -84,15 +84,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle HTTP exceptions."""
     logger.error(f"HTTP error {exc.status_code}: {exc.detail}")
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
             error=f"HTTPException_{exc.status_code}",
             message=exc.detail,
             detail=None,
-            timestamp=datetime.now().isoformat()
-        ).dict()
+            timestamp=datetime.now().isoformat(),
+        ).dict(),
     )
 
 
@@ -100,15 +100,15 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle general exceptions."""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
             error="InternalServerError",
             message="An unexpected error occurred",
             detail=str(exc),
-            timestamp=datetime.now().isoformat()
-        ).dict()
+            timestamp=datetime.now().isoformat(),
+        ).dict(),
     )
 
 
@@ -130,8 +130,8 @@ async def home(request: Request):
                     <p><a href="/api/docs">API Documentation</a></p>
                 </body>
             </html>
-            """, 
-            status_code=200
+            """,
+            status_code=200,
         )
 
 
@@ -151,8 +151,8 @@ async def prediction_page(request: Request):
                     <p>Use the <a href="/api/docs">API</a> to make predictions</p>
                 </body>
             </html>
-            """, 
-            status_code=200
+            """,
+            status_code=200,
         )
 
 
@@ -172,8 +172,8 @@ async def faq_page(request: Request):
                     <p>Documentation coming soon</p>
                 </body>
             </html>
-            """, 
-            status_code=200
+            """,
+            status_code=200,
         )
 
 
@@ -192,10 +192,10 @@ async def startup_event():
     logger.info(f"Docs: http://localhost:{config.api.port}/api/docs")
     logger.info(f"Home: http://localhost:{config.api.port}/")
     logger.info("=" * 70)
-    
+
     # Try to load models (non-blocking)
     predictor = get_predictor_optional()
-    
+
     if predictor is not None:
         logger.info("✓ Models loaded successfully - Ready for predictions")
     else:
@@ -206,7 +206,9 @@ async def startup_event():
         logger.warning("")
         logger.warning("To enable predictions, run the ML pipeline:")
         logger.warning("")
-        logger.warning("  Docker:  docker exec tbfusionai-api python main.py run-pipeline")
+        logger.warning(
+            "  Docker:  docker exec tbfusionai-api python main.py run-pipeline"
+        )
         logger.warning("  Local:   python main.py run-pipeline")
         logger.warning("")
         logger.warning("This will:")
@@ -217,7 +219,9 @@ async def startup_event():
         logger.warning("")
         logger.warning("Total time: ~2 hours")
         logger.warning("")
-        logger.warning("Check status: http://localhost:{}/api/v1/status".format(config.api.port))
+        logger.warning(
+            "Check status: http://localhost:{}/api/v1/status".format(config.api.port)
+        )
         logger.warning("=" * 70)
 
 
@@ -230,10 +234,11 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "src.api.main:app",
         host=config.api.host,
         port=config.api.port,
         reload=config.api.reload,
-        workers=config.api.workers
+        workers=config.api.workers,
     )

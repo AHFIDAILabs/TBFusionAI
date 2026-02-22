@@ -7,13 +7,8 @@ Contains:
 - Predictor: High-level prediction interface
 """
 
-from src.models.preprocessor import AudioPreprocessor, FeaturePreprocessor
 from src.models.ensemble_model import EnsembleModel
 from src.models.predictor import TBPredictor
+from src.models.preprocessor import AudioPreprocessor, FeaturePreprocessor
 
-__all__ = [
-    "AudioPreprocessor",
-    "FeaturePreprocessor",
-    "EnsembleModel",
-    "TBPredictor"
-]
+__all__ = ["AudioPreprocessor", "FeaturePreprocessor", "EnsembleModel", "TBPredictor"]

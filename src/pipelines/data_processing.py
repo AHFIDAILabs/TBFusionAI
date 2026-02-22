@@ -17,6 +17,7 @@ from typing import Dict, List, Optional, Tuple
 import librosa
 import librosa.display
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import noisereduce as nr
@@ -68,7 +69,7 @@ class DataProcessingPipeline:
             self.preprocessed_path / "04_final_audio",
             self.preprocessed_path / "05_spectrograms",
             self.preprocessed_path / "plots",
-            self.labeled_data_path
+            self.labeled_data_path,
         ]
 
         for directory in directories:
@@ -113,7 +114,9 @@ class DataProcessingPipeline:
         logger.info("=" * 70)
 
         audio_dir = self.dataset_path / "raw_data" / "longitudinal_data"
-        output_embeddings = self.preprocessed_path / "longitudinal_wav2vec2_embeddings.csv"
+        output_embeddings = (
+            self.preprocessed_path / "longitudinal_wav2vec2_embeddings.csv"
+        )
         output_stats = self.preprocessed_path / "longitudinal_audio_statistics.csv"
 
         if output_embeddings.exists() and output_stats.exists():
@@ -122,10 +125,9 @@ class DataProcessingPipeline:
 
         model, processor = await self._load_wav2vec2_model()
 
-        audio_files = sorted([
-            f for f in audio_dir.iterdir()
-            if f.suffix.lower() == ".wav"
-        ])
+        audio_files = sorted(
+            [f for f in audio_dir.iterdir() if f.suffix.lower() == ".wav"]
+        )
 
         embedding_data = []
         stats_data = []
@@ -137,20 +139,24 @@ class DataProcessingPipeline:
 
                 embedding_data.append([audio_file.name] + embedding.tolist())
 
-                stats_data.append([
-                    audio_file.name,
-                    waveform.shape[1] / sr,
-                    original_sr,
-                    sr,
-                    waveform.shape[0],
-                    waveform.shape[1],
-                    "success"
-                ])
+                stats_data.append(
+                    [
+                        audio_file.name,
+                        waveform.shape[1] / sr,
+                        original_sr,
+                        sr,
+                        waveform.shape[0],
+                        waveform.shape[1],
+                        "success",
+                    ]
+                )
 
             except Exception as e:
                 logger.warning(f"Error processing {audio_file.name}: {e}")
 
-        columns_embed = ["filename"] + [f"feat_{i}" for i in range(len(embedding_data[0]) - 1)]
+        columns_embed = ["filename"] + [
+            f"feat_{i}" for i in range(len(embedding_data[0]) - 1)
+        ]
         embeddings_df = pd.DataFrame(embedding_data, columns=columns_embed)
 
         stats_df = pd.DataFrame(
@@ -162,8 +168,8 @@ class DataProcessingPipeline:
                 "resampled_sr",
                 "channels",
                 "total_samples",
-                "status"
-            ]
+                "status",
+            ],
         )
 
         embeddings_df.to_csv(output_embeddings, index=False)
@@ -184,12 +190,10 @@ class DataProcessingPipeline:
         for attempt in range(self.config.audio_extraction.max_retries):
             try:
                 processor = Wav2Vec2Processor.from_pretrained(
-                    self.config.audio_extraction.model_name,
-                    cache_dir=str(cache_dir)
+                    self.config.audio_extraction.model_name, cache_dir=str(cache_dir)
                 )
                 model = Wav2Vec2Model.from_pretrained(
-                    self.config.audio_extraction.model_name,
-                    cache_dir=str(cache_dir)
+                    self.config.audio_extraction.model_name, cache_dir=str(cache_dir)
                 )
                 model.eval()
                 return model.to(self.device), processor
@@ -217,7 +221,9 @@ class DataProcessingPipeline:
         original_sr = sr
 
         if sr != self.config.audio_extraction.sample_rate:
-            resampler = torchaudio.transforms.Resample(sr, self.config.audio_extraction.sample_rate)
+            resampler = torchaudio.transforms.Resample(
+                sr, self.config.audio_extraction.sample_rate
+            )
             waveform = resampler(waveform)
             sr = self.config.audio_extraction.sample_rate
 
@@ -228,7 +234,7 @@ class DataProcessingPipeline:
         waveform: torch.Tensor,
         sr: int,
         model: Wav2Vec2Model,
-        processor: Wav2Vec2Processor
+        processor: Wav2Vec2Processor,
     ) -> np.ndarray:
         """
         Extract Wav2Vec2 embedding from waveform.
@@ -237,10 +243,7 @@ class DataProcessingPipeline:
             Embedding vector
         """
         inputs = processor(
-            waveform.squeeze(),
-            sampling_rate=sr,
-            return_tensors="pt",
-            padding=True
+            waveform.squeeze(), sampling_rate=sr, return_tensors="pt", padding=True
         )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
@@ -273,7 +276,8 @@ class DataProcessingPipeline:
         audio_files = [
             os.path.join(root, f)
             for root, _, files in os.walk(raw_audio_dir)
-            for f in files if f.lower().endswith(".wav")
+            for f in files
+            if f.lower().endswith(".wav")
         ]
 
         await self._stage_denoise(audio_files)
@@ -299,7 +303,7 @@ class DataProcessingPipeline:
                 y_reduced = nr.reduce_noise(
                     y=y_filtered,
                     sr=sr,
-                    prop_decrease=self.config.audio_preprocessing.noise_prop_decrease
+                    prop_decrease=self.config.audio_preprocessing.noise_prop_decrease,
                 )
                 sf.write(denoised_dir / os.path.basename(file_path), y_reduced, sr)
             except Exception as e:
@@ -314,7 +318,9 @@ class DataProcessingPipeline:
         nyq = 0.5 * sr
         low = self.config.audio_preprocessing.lowcut / nyq
         high = self.config.audio_preprocessing.highcut / nyq
-        b, a = butter(self.config.audio_preprocessing.filter_order, [low, high], btype="band")
+        b, a = butter(
+            self.config.audio_preprocessing.filter_order, [low, high], btype="band"
+        )
         return lfilter(b, a, data)
 
     async def _stage_segment(self) -> int:
@@ -329,7 +335,9 @@ class DataProcessingPipeline:
 
         for file in tqdm(denoised_dir.glob("*.wav"), desc="Segmenting"):
             y, sr = librosa.load(file, sr=None)
-            segments = self._extract_segments_energy(y, sr) + self._extract_segments_librosa(y, sr)
+            segments = self._extract_segments_energy(
+                y, sr
+            ) + self._extract_segments_librosa(y, sr)
 
             for i, (start, end) in enumerate(set(segments)):
                 sf.write(hybrid_dir / f"{file.stem}_seg{i}.wav", y[start:end], sr)
@@ -341,7 +349,9 @@ class DataProcessingPipeline:
         Extract segments using energy thresholding.
         """
         energy = np.square(y)
-        threshold = self.config.audio_preprocessing.energy_threshold_ratio * np.max(energy)
+        threshold = self.config.audio_preprocessing.energy_threshold_ratio * np.max(
+            energy
+        )
         indices = np.where(energy > threshold)[0]
 
         if len(indices) == 0:
@@ -354,7 +364,9 @@ class DataProcessingPipeline:
         for i in range(1, len(indices)):
             if indices[i] - indices[i - 1] > silence_gap:
                 end = indices[i - 1]
-                if (end - start) / sr >= self.config.audio_preprocessing.min_segment_length_sec:
+                if (
+                    end - start
+                ) / sr >= self.config.audio_preprocessing.min_segment_length_sec:
                     segments.append((start, end))
                 start = indices[i]
 
@@ -364,11 +376,15 @@ class DataProcessingPipeline:
 
         return segments
 
-    def _extract_segments_librosa(self, y: np.ndarray, sr: int) -> List[Tuple[int, int]]:
+    def _extract_segments_librosa(
+        self, y: np.ndarray, sr: int
+    ) -> List[Tuple[int, int]]:
         """
         Extract segments using librosa silence splitting.
         """
-        intervals = librosa.effects.split(y, top_db=self.config.audio_preprocessing.librosa_top_db)
+        intervals = librosa.effects.split(
+            y, top_db=self.config.audio_preprocessing.librosa_top_db
+        )
         return [
             (start, end)
             for start, end in intervals
@@ -390,7 +406,10 @@ class DataProcessingPipeline:
             y, sr = librosa.load(file, sr=None)
             metrics = self._calculate_audio_metrics(y, sr)
 
-            if metrics["rms"] > self.config.audio_preprocessing.rms_min and metrics["snr"] > self.config.audio_preprocessing.snr_min:
+            if (
+                metrics["rms"] > self.config.audio_preprocessing.rms_min
+                and metrics["snr"] > self.config.audio_preprocessing.snr_min
+            ):
                 shutil.copy(file, final_audio_dir / file.name)
                 count += 1
 
@@ -414,7 +433,7 @@ class DataProcessingPipeline:
         """
         try:
             harmonic, _ = librosa.effects.hpss(y)
-            return 10 * np.log10(np.mean(y ** 2) / (np.mean((y - harmonic) ** 2) + 1e-10))
+            return 10 * np.log10(np.mean(y**2) / (np.mean((y - harmonic) ** 2) + 1e-10))
         except Exception:
             return 0.0
 
@@ -428,25 +447,27 @@ class DataProcessingPipeline:
         for file in tqdm(final_audio_dir.glob("*.wav"), desc="Generating spectrograms"):
             y, sr = librosa.load(file, sr=None)
             S = librosa.feature.melspectrogram(
-                y=y,
-                sr=sr,
-                n_mels=self.config.audio_preprocessing.n_mels
+                y=y, sr=sr, n_mels=self.config.audio_preprocessing.n_mels
             )
             S_db = librosa.power_to_db(S, ref=np.max)
 
             plt.figure(figsize=self.config.audio_preprocessing.spectrogram_figsize)
-            librosa.display.specshow(S_db, sr=sr, x_axis="time", y_axis="mel", cmap="magma")
+            librosa.display.specshow(
+                S_db, sr=sr, x_axis="time", y_axis="mel", cmap="magma"
+            )
             plt.axis("off")
             plt.tight_layout(pad=0)
             plt.savefig(
                 spectrograms_dir / file.name.replace(".wav", ".png"),
                 dpi=self.config.audio_preprocessing.spectrogram_dpi,
                 bbox_inches="tight",
-                pad_inches=0
+                pad_inches=0,
             )
             plt.close()
 
-    async def _match_metadata_and_integrate_features(self, embeddings_df: pd.DataFrame) -> pd.DataFrame:
+    async def _match_metadata_and_integrate_features(
+        self, embeddings_df: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         Match audio embeddings with clinical and longitudinal metadata.
 
@@ -454,25 +475,41 @@ class DataProcessingPipeline:
             Merged DataFrame
         """
         clinical_meta = pd.read_csv(
-            self.dataset_path / "meta_data" / "Clinical" / "CODA_TB_Clinical_Meta_Info.csv"
+            self.dataset_path
+            / "meta_data"
+            / "Clinical"
+            / "CODA_TB_Clinical_Meta_Info.csv"
         )
         longitudinal_meta = pd.read_csv(
-            self.dataset_path / "meta_data" / "Cough Metadata" / "CODA_TB_Longitudnal_Meta_Info.csv"
+            self.dataset_path
+            / "meta_data"
+            / "Cough Metadata"
+            / "CODA_TB_Longitudnal_Meta_Info.csv"
         )
 
         clinical_meta.columns = clinical_meta.columns.str.lower()
         longitudinal_meta.columns = longitudinal_meta.columns.str.lower()
 
-        metadata_merged = pd.merge(longitudinal_meta, clinical_meta, on="participant", how="inner")
+        metadata_merged = pd.merge(
+            longitudinal_meta, clinical_meta, on="participant", how="inner"
+        )
 
         def extract_base_filename(name: str) -> str:
             return str(name).replace(".wav", "").replace(".png", "").split("_")[0]
 
-        embeddings_df["base_filename"] = embeddings_df["filename"].apply(extract_base_filename)
-        metadata_merged["base_filename"] = metadata_merged["filename"].apply(extract_base_filename)
+        embeddings_df["base_filename"] = embeddings_df["filename"].apply(
+            extract_base_filename
+        )
+        metadata_merged["base_filename"] = metadata_merged["filename"].apply(
+            extract_base_filename
+        )
 
-        df_merged = pd.merge(embeddings_df, metadata_merged, on="base_filename", how="inner")
-        df_merged.to_csv(self.labeled_data_path / "wav2vec2_with_labels.csv", index=False)
+        df_merged = pd.merge(
+            embeddings_df, metadata_merged, on="base_filename", how="inner"
+        )
+        df_merged.to_csv(
+            self.labeled_data_path / "wav2vec2_with_labels.csv", index=False
+        )
 
         return df_merged
 
@@ -488,9 +525,18 @@ class DataProcessingPipeline:
         logger.info("=" * 70)
 
         cols_to_drop = [
-            "participant", "filename_x", "filename_y", "sound_prediction_score",
-            "height", "weight", "tb_prior_pul", "tb_prior_extrapul",
-            "tb_prior_unknown", "heart_rate", "temperature", "smoke_lweek"
+            "participant",
+            "filename_x",
+            "filename_y",
+            "sound_prediction_score",
+            "height",
+            "weight",
+            "tb_prior_pul",
+            "tb_prior_extrapul",
+            "tb_prior_unknown",
+            "heart_rate",
+            "temperature",
+            "smoke_lweek",
         ]
 
         df_clean = df.drop(columns=[c for c in cols_to_drop if c in df.columns])
@@ -517,8 +563,12 @@ class DataProcessingPipeline:
         logger.info("\n✓ Using original imbalanced data (NO synthetic generation)")
         logger.info("✓ Models expected to apply cost-sensitive learning")
 
-        df_clean = shuffle(df_clean, random_state=self.config.model_training.random_state)
-        df_clean.to_csv(self.labeled_data_path / "wav2vec2_balanced_ctgan.csv", index=False)
+        df_clean = shuffle(
+            df_clean, random_state=self.config.model_training.random_state
+        )
+        df_clean.to_csv(
+            self.labeled_data_path / "wav2vec2_balanced_ctgan.csv", index=False
+        )
 
         gc.collect()
         return df_clean

@@ -52,21 +52,20 @@ Clinical Safety Layer
 Final Ensemble Artifact Save
 """
 
-import warnings
 import hashlib
 import json
+import warnings
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import joblib
 import numpy as np
 import pandas as pd
-
 from sklearn.metrics import (
     confusion_matrix,
-    recall_score,
     f1_score,
     fbeta_score,
+    recall_score,
     roc_curve,
 )
 
@@ -80,6 +79,7 @@ logger = get_logger(__name__)
 # =========================================================
 # SAFETY UTILITIES
 # =========================================================
+
 
 def safe_path(p):
     """Guarantee Path object. Prevents OptionInfo path bugs."""
@@ -106,6 +106,7 @@ def safe_threshold_range(start, stop, step):
 # CLINICAL SAFETY EXTENSIONS
 # =========================================================
 
+
 def compute_model_hash(models: Dict) -> str:
     """Generate integrity hash across all base models."""
     hasher = hashlib.sha256()
@@ -124,8 +125,8 @@ def population_stability_index(expected, actual, bins=10):
     actual_pct = actual_hist / max(actual_hist.sum(), 1)
 
     psi = np.sum(
-        (actual_pct - expected_pct) *
-        np.log((actual_pct + 1e-6) / (expected_pct + 1e-6))
+        (actual_pct - expected_pct)
+        * np.log((actual_pct + 1e-6) / (expected_pct + 1e-6))
     )
     return psi
 
@@ -133,6 +134,7 @@ def population_stability_index(expected, actual, bins=10):
 # =========================================================
 # MAIN PIPELINE
 # =========================================================
+
 
 class ModelEvaluationPipeline:
 
@@ -147,10 +149,9 @@ class ModelEvaluationPipeline:
 
         logger.info("Enhanced Evaluation Pipeline Initialised")
 
-
-# ---------------------------------------------------------
-# LOAD MODELS + DATA
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # LOAD MODELS + DATA
+    # ---------------------------------------------------------
 
     async def _load_models_and_data(self, test_path: Optional[Path]):
 
@@ -165,11 +166,12 @@ class ModelEvaluationPipeline:
             self.base_models[name] = joblib.load(path)
 
         if test_path is None:
-            test_path = self.config.paths.labeled_data_path / "wav2vec2_balanced_ctgan.csv"
+            test_path = (
+                self.config.paths.labeled_data_path / "wav2vec2_balanced_ctgan.csv"
+            )
 
         df = pd.read_csv(test_path).sample(
-            frac=0.2,
-            random_state=self.config.model_training.random_state
+            frac=0.2, random_state=self.config.model_training.random_state
         )
 
         X = df[self.metadata["feature_columns"]]
@@ -177,22 +179,19 @@ class ModelEvaluationPipeline:
 
         return self.scaler.transform(X), y
 
-
-# ---------------------------------------------------------
-# ENSEMBLE VOTING LAYER
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # ENSEMBLE VOTING LAYER
+    # ---------------------------------------------------------
 
     def _ensemble_predictions(self, probs):
 
         names = list(probs.keys())
 
         hard = (
-            probs[names[0]] >= 0.5
-        ).astype(int) + (
-            probs[names[1]] >= 0.5
-        ).astype(int) + (
-            probs[names[2]] >= 0.5
-        ).astype(int)
+            (probs[names[0]] >= 0.5).astype(int)
+            + (probs[names[1]] >= 0.5).astype(int)
+            + (probs[names[2]] >= 0.5).astype(int)
+        )
 
         hard = (hard >= self.config.ensemble.hard_voting_threshold).astype(int)
 
@@ -200,18 +199,14 @@ class ModelEvaluationPipeline:
         soft = (avg >= self.config.ensemble.soft_voting_threshold).astype(int)
 
         weights = self.config.ensemble.model_weights
-        weighted = sum(
-            probs[n] * weights.get(n, 1/len(names))
-            for n in names
-        )
+        weighted = sum(probs[n] * weights.get(n, 1 / len(names)) for n in names)
         weighted = (weighted >= self.config.ensemble.soft_voting_threshold).astype(int)
 
         return hard, soft, weighted, avg
 
-
-# ---------------------------------------------------------
-# THRESHOLD OPTIMISATION LAYER
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # THRESHOLD OPTIMISATION LAYER
+    # ---------------------------------------------------------
 
     def _cost_threshold(self, avg_proba, y):
 
@@ -221,19 +216,18 @@ class ModelEvaluationPipeline:
         for t in safe_threshold_range(
             self.config.ensemble.threshold_search_start,
             self.config.ensemble.threshold_search_end,
-            self.config.ensemble.threshold_search_step
+            self.config.ensemble.threshold_search_step,
         ):
             pred = (avg_proba >= t).astype(int)
             tn, fp, fn, tp = safe_confusion(y, pred)
 
-            cost = fn*self.config.ensemble.cost_fn + fp*self.config.ensemble.cost_fp
+            cost = fn * self.config.ensemble.cost_fn + fp * self.config.ensemble.cost_fp
 
             if cost < best_cost:
                 best_cost = cost
                 best_t = t
 
         return best_t
-
 
     def _fbeta_threshold(self, avg_proba, y, beta):
 
@@ -250,17 +244,15 @@ class ModelEvaluationPipeline:
 
         return best_t
 
-
     def _youden_threshold(self, avg_proba, y):
 
         fpr, tpr, thr = roc_curve(y, avg_proba)
         idx = np.argmax(tpr - fpr)
         return thr[idx]
 
-
-# ---------------------------------------------------------
-# THRESHOLD COMPARISON + AUTO SELECTION
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # THRESHOLD COMPARISON + AUTO SELECTION
+    # ---------------------------------------------------------
 
     def _select_threshold(self, avg_proba, y):
 
@@ -287,44 +279,38 @@ class ModelEvaluationPipeline:
 
         return best, results[best], results
 
-
-# ---------------------------------------------------------
-# CLINICAL SAFETY LAYER
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # CLINICAL SAFETY LAYER
+    # ---------------------------------------------------------
     def _clinical_monitoring(self, avg_proba, y, threshold):
         psi = population_stability_index(y, avg_proba)
         pred = (avg_proba >= threshold).astype(int)
         uncertainty = np.abs(avg_proba - threshold)
-        audit = {
-            "psi": float(psi),
-            "uncertain_cases": int((uncertainty < 0.05).sum())
-        }
+        audit = {"psi": float(psi), "uncertain_cases": int((uncertainty < 0.05).sum())}
 
         return audit
 
-
-# ---------------------------------------------------------
-# SAVE FINAL ENSEMBLE
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # SAVE FINAL ENSEMBLE
+    # ---------------------------------------------------------
     async def _save(self, threshold, strategy, audit):
         model_hash = compute_model_hash(self.base_models)
         bundle = {
-            "models": self.base_models,              # Keep for new code
-            "base_models": self.base_models,         # Add for compatibility
-            "scaler": self.scaler,                   # Add scaler to bundle
-            "threshold": threshold,                  # Keep for new code
-            "optimal_threshold": threshold,          # Add for compatibility
+            "models": self.base_models,  # Keep for new code
+            "base_models": self.base_models,  # Add for compatibility
+            "scaler": self.scaler,  # Add scaler to bundle
+            "threshold": threshold,  # Keep for new code
+            "optimal_threshold": threshold,  # Add for compatibility
             "strategy": strategy,
             "audit": audit,
-            "integrity_hash": model_hash
+            "integrity_hash": model_hash,
         }
 
         joblib.dump(bundle, self.models_path / "cost_sensitive_ensemble_model.joblib")
 
-
-# ---------------------------------------------------------
-# MAIN RUN
-# ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # MAIN RUN
+    # ---------------------------------------------------------
     async def run(self, test_path=None):
         X, y = await self._load_models_and_data(test_path)
         probs = {
@@ -336,11 +322,8 @@ class ModelEvaluationPipeline:
         audit = self._clinical_monitoring(avg, y, best_t)
         await self._save(best_t, best_name, audit)
 
-        return {
-            "threshold": best_t,
-            "strategy": best_name,
-            "audit": audit
-        }
+        return {"threshold": best_t, "strategy": best_name, "audit": audit}
+
 
 # ---------------------------------------------------------
 # STANDALONE RUNNER

@@ -11,14 +11,14 @@ Contains all ML pipeline stages:
 
 from src.pipelines.data_ingestion import DataIngestionPipeline
 from src.pipelines.data_processing import DataProcessingPipeline
-from src.pipelines.model_training import ModelTrainingPipeline
 from src.pipelines.model_evaluation import ModelEvaluationPipeline
 from src.pipelines.model_inference import ModelInferencePipeline
+from src.pipelines.model_training import ModelTrainingPipeline
 
 __all__ = [
     "DataIngestionPipeline",
     "DataProcessingPipeline",
     "ModelTrainingPipeline",
     "ModelEvaluationPipeline",
-    "ModelInferencePipeline"
-] 
+    "ModelInferencePipeline",
+]

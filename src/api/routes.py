@@ -47,61 +47,61 @@ router = APIRouter()
     "/health",
     response_model=HealthCheckResponse,
     summary="Health Check",
-    description="Check API health and model status"
+    description="Check API health and model status",
 )
-async def health_check(
-    config: Config = Depends(get_app_config)
-) -> HealthCheckResponse:
+async def health_check(config: Config = Depends(get_app_config)) -> HealthCheckResponse:
     """
     Check API health status - works even without models.
-    
+
     Returns:
         HealthCheckResponse: Health status information
     """
     # Try to get predictor without raising exceptions
     predictor = get_predictor_optional()
     model_loaded = predictor is not None
-    
+
     return HealthCheckResponse(
         status="healthy" if model_loaded else "ready_for_setup",
         version=config.api.app_version,
         model_loaded=model_loaded,
-        timestamp=datetime.now().isoformat()
+        timestamp=datetime.now().isoformat(),
     )
 
 
 @router.get(
     "/status",
     summary="Detailed Status",
-    description="Get detailed system status and setup instructions"
+    description="Get detailed system status and setup instructions",
 )
-async def get_status(
-    config: Config = Depends(get_app_config)
-) -> Dict:
+async def get_status(config: Config = Depends(get_app_config)) -> Dict:
     """
     Get detailed status including setup instructions.
-    
+
     Returns:
         Dictionary with status and instructions
     """
     predictor = get_predictor_optional()
-    
+
     # Check which pipeline stages are complete
     dataset_exists = (config.paths.dataset_path / "raw_data").exists()
-    processed_exists = (config.paths.preprocessed_path / "longitudinal_wav2vec2_embeddings.csv").exists()
-    models_exist = (config.paths.models_path / "cost_sensitive_ensemble_model.joblib").exists()
-    
+    processed_exists = (
+        config.paths.preprocessed_path / "longitudinal_wav2vec2_embeddings.csv"
+    ).exists()
+    models_exist = (
+        config.paths.models_path / "cost_sensitive_ensemble_model.joblib"
+    ).exists()
+
     status_info = {
         "api_version": config.api.app_version,
         "model_loaded": predictor is not None,
         "pipeline_status": {
             "data_ingested": dataset_exists,
             "data_processed": processed_exists,
-            "models_trained": models_exist
+            "models_trained": models_exist,
         },
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
-    
+
     # Add setup instructions if models not loaded
     if not models_exist:
         status_info["setup_required"] = True
@@ -109,20 +109,20 @@ async def get_status(
             "message": "Models not found. Run the ML pipeline to train models.",
             "commands": {
                 "docker": "docker exec tbfusionai-api python main.py run-pipeline",
-                "local": "python main.py run-pipeline"
+                "local": "python main.py run-pipeline",
             },
             "steps": [
                 "1. Data Ingestion - Downloads CODA TB dataset (~15 min)",
                 "2. Data Processing - Extracts audio features (~60 min)",
                 "3. Model Training - Trains multiple models (~30 min)",
-                "4. Model Evaluation - Creates ensemble (~5 min)"
+                "4. Model Evaluation - Creates ensemble (~5 min)",
             ],
-            "estimated_time": "~2 hours total for complete pipeline"
+            "estimated_time": "~2 hours total for complete pipeline",
         }
     else:
         status_info["setup_required"] = False
         status_info["message"] = "System ready for predictions"
-    
+
     return status_info
 
 
@@ -135,8 +135,8 @@ async def get_status(
         400: {"model": ErrorResponse},
         413: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
-        503: {"model": ErrorResponse}
-    }
+        503: {"model": ErrorResponse},
+    },
 )
 async def predict_from_audio(
     audio_file: UploadFile = File(..., description="Audio file (WAV, MP3, OGG)"),
@@ -151,11 +151,11 @@ async def predict_from_audio(
     generate_spectrogram: bool = Form(True, description="Generate spectrogram"),
     validate_quality: bool = Form(False, description="Validate audio quality"),
     predictor: TBPredictor = Depends(get_predictor),
-    validated_file: UploadFile = Depends(validate_audio_file)
+    validated_file: UploadFile = Depends(validate_audio_file),
 ) -> PredictionResponse:
     """
     Make TB prediction from audio file.
-    
+
     Args:
         audio_file: Audio file
         age: Patient age
@@ -169,52 +169,46 @@ async def predict_from_audio(
         generate_spectrogram: Whether to generate spectrogram
         predictor: TBPredictor instance
         validated_file: Validated audio file
-    
+
     Returns:
         PredictionResponse: Prediction result
     """
     try:
         logger.info(f"Received prediction request for file: {audio_file.filename}")
-        
+
         # Read audio file
         audio_bytes = await audio_file.read()
         audio_io = io.BytesIO(audio_bytes)
-        
+
         # Prepare clinical features
         clinical_features = {
-            'age': age,
-            'sex': sex,
-            'reported_cough_dur': reported_cough_dur,
-            'tb_prior': tb_prior,
-            'hemoptysis': hemoptysis,
-            'weight_loss': weight_loss,
-            'fever': fever,
-            'night_sweats': night_sweats
+            "age": age,
+            "sex": sex,
+            "reported_cough_dur": reported_cough_dur,
+            "tb_prior": tb_prior,
+            "hemoptysis": hemoptysis,
+            "weight_loss": weight_loss,
+            "fever": fever,
+            "night_sweats": night_sweats,
         }
-        
+
         # Make prediction
         result = await predictor.predict_from_audio(
-            audio_io,
-            clinical_features,
-            generate_spectrogram,
-            validate_quality
+            audio_io, clinical_features, generate_spectrogram, validate_quality
         )
-        
+
         logger.info(f"✓ Prediction completed: {result['prediction']}")
-        
+
         return PredictionResponse(**result)
-        
+
     except ValueError as e:
         logger.error(f"Validation error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}"
+            detail=f"Prediction failed: {str(e)}",
         )
 
 
@@ -226,44 +220,40 @@ async def predict_from_audio(
     responses={
         400: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
-        503: {"model": ErrorResponse}
-    }
+        503: {"model": ErrorResponse},
+    },
 )
 async def predict_from_features(
-    features: Dict[str, float],
-    predictor: TBPredictor = Depends(get_predictor)
+    features: Dict[str, float], predictor: TBPredictor = Depends(get_predictor)
 ) -> PredictionResponse:
     """
     Make TB prediction from features.
-    
+
     Args:
         features: Dictionary of all features (clinical + audio)
         predictor: TBPredictor instance
-    
+
     Returns:
         PredictionResponse: Prediction result
     """
     try:
         logger.info("Received prediction request from features")
-        
+
         # Make prediction
         result = await predictor.predict_from_features(features)
-        
+
         logger.info(f"✓ Prediction completed: {result['prediction']}")
-        
+
         return PredictionResponse(**result)
-        
+
     except ValueError as e:
         logger.error(f"Validation error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}"
+            detail=f"Prediction failed: {str(e)}",
         )
 
 
@@ -272,17 +262,17 @@ async def predict_from_features(
     response_model=ModelInfoResponse,
     summary="Get Model Information",
     description="Get information about the loaded model",
-    responses={503: {"model": ErrorResponse}}
+    responses={503: {"model": ErrorResponse}},
 )
 async def get_model_info(
-    predictor: TBPredictor = Depends(get_predictor)
+    predictor: TBPredictor = Depends(get_predictor),
 ) -> ModelInfoResponse:
     """
     Get model information.
-    
+
     Args:
         predictor: TBPredictor instance
-    
+
     Returns:
         ModelInfoResponse: Model information
     """
@@ -293,7 +283,7 @@ async def get_model_info(
         logger.error(f"Failed to get model info: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get model info: {str(e)}"
+            detail=f"Failed to get model info: {str(e)}",
         )
 
 
@@ -302,42 +292,38 @@ async def get_model_info(
     response_model=FeatureImportanceResponse,
     summary="Get Feature Importance",
     description="Get feature importance rankings from ensemble model",
-    responses={503: {"model": ErrorResponse}}
+    responses={503: {"model": ErrorResponse}},
 )
 async def get_feature_importance(
-    top_n: int = 10,
-    predictor: TBPredictor = Depends(get_predictor)
+    top_n: int = 10, predictor: TBPredictor = Depends(get_predictor)
 ) -> FeatureImportanceResponse:
     """
     Get feature importance.
-    
+
     Args:
         top_n: Number of top features to return
         predictor: TBPredictor instance
-    
+
     Returns:
         FeatureImportanceResponse: Feature importance data
     """
     try:
         importance_dict = predictor.ensemble_model.get_feature_importance(
-            predictor.metadata['feature_columns']
+            predictor.metadata["feature_columns"]
         )
-        
+
         # Convert to list format
         features = [
             {"feature": name, "importance": float(importance)}
             for name, importance in list(importance_dict.items())[:top_n]
         ]
-        
-        return FeatureImportanceResponse(
-            features=features,
-            top_n=top_n
-        )
+
+        return FeatureImportanceResponse(features=features, top_n=top_n)
     except Exception as e:
         logger.error(f"Failed to get feature importance: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get feature importance: {str(e)}"
+            detail=f"Failed to get feature importance: {str(e)}",
         )
 
 
@@ -350,40 +336,40 @@ async def get_feature_importance(
         400: {"model": ErrorResponse},
         413: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
-        503: {"model": ErrorResponse}
-    }
+        503: {"model": ErrorResponse},
+    },
 )
 async def get_audio_metrics(
     audio_file: UploadFile = File(..., description="Audio file"),
     predictor: TBPredictor = Depends(get_predictor),
-    validated_file: UploadFile = Depends(validate_audio_file)
+    validated_file: UploadFile = Depends(validate_audio_file),
 ) -> AudioMetrics:
     """
     Calculate audio metrics.
-    
+
     Args:
         audio_file: Audio file
         predictor: TBPredictor instance
         validated_file: Validated audio file
-    
+
     Returns:
         AudioMetrics: Audio quality metrics
     """
     try:
         logger.info(f"Calculating metrics for: {audio_file.filename}")
-        
+
         # Read audio file
         audio_bytes = await audio_file.read()
         audio_io = io.BytesIO(audio_bytes)
-        
+
         # Calculate metrics
         metrics = predictor.audio_preprocessor.calculate_audio_metrics(audio_io)
-        
+
         return AudioMetrics(**metrics)
-        
+
     except Exception as e:
         logger.error(f"Failed to calculate metrics: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calculate metrics: {str(e)}"
+            detail=f"Failed to calculate metrics: {str(e)}",
         )
