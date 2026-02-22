@@ -20,7 +20,7 @@ soundfile==0.12.1
 noisereduce==2.0.1
 
 # Synthetic Data Generation
-sdv==1.2.1
+#sdv==1.2.1
 
 # Computer Vision (for spectrograms)
 Pillow==10.0.0
