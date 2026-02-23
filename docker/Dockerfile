@@ -21,9 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create application user
+# Create application user and base directory
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app /app/artifacts && \
+    mkdir -p /app && \
     chown -R appuser:appuser /app
 
 WORKDIR /app
@@ -40,18 +40,16 @@ COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install --resume-retries 20 --timeout 300 -r requirements.txt
 
-# RUN pip install --upgrade pip setuptools wheel && \
-#     pip install -r requirements.txt
-
 # ============================================================================
 # Stage 3: Application
 # ============================================================================
 FROM dependencies as application
 
-# Copy application code
+# Copy application code as the appuser
 COPY --chown=appuser:appuser . .
 
-# Create necessary directories
+# Create necessary directories and set permissions as root
+USER root
 RUN mkdir -p \
     artifacts/dataset \
     artifacts/trained_models \
@@ -59,9 +57,10 @@ RUN mkdir -p \
     artifacts/labeled_data \
     artifacts/reports \
     artifacts/logs \
-    frontend/static/uploads
+    frontend/static/uploads && \
+    chown -R appuser:appuser /app/artifacts /app/frontend
 
-# Switch to application user
+# Switch to application user for security
 USER appuser
 
 # Expose port

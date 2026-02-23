@@ -14,17 +14,16 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # Updated to v4 for better performance
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # Updated to v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
 
-      # Using the official pre-commit action is the "Gold Standard".
-      # This ensures the CI uses the EXACT same versions as your local machine.
-      - name: Run pre-commit
+      # Runs black, isort, flake8, etc., based on your .pre-commit-config.yaml
+      - name: Run pre-commit hooks
         uses: pre-commit/action@v3.0.1
 
   # ==========================================================================
@@ -54,19 +53,18 @@ jobs:
 
       - name: Run tests
         run: |
-          # Run tests without coverage threshold
           pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
         continue-on-error: false
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4 # Updated to v4
+        uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }} # Recommended for v4+
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ==========================================================================
-  # Build Docker Image
+  # Build and Verify Docker Image
   # ==========================================================================
   build:
     name: Build Docker Image
@@ -76,7 +74,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3 # Updated to v3
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
         run: |
@@ -84,6 +82,7 @@ jobs:
 
       - name: Test Docker image
         run: |
+          # We check if the app can start and import itself without PermissionErrors
           docker run --rm tbfusionai:${{ github.sha }} python -c "import src; print('Import successful')"
 
   # ==========================================================================
