@@ -59,7 +59,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/v1/health || exit 1
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Change this:
+# CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# To this (it tells uvicorn to use $PORT, or default to 8000 if not set):
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 
 
 # # Multi-stage Docker build for TBFusionAI
