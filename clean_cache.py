@@ -16,6 +16,7 @@ import os
 import shutil
 from pathlib import Path
 
+
 def clean_project(root_dir: str = "."):
     """
     Traverses the directory tree starting from root_dir and removes
@@ -23,7 +24,7 @@ def clean_project(root_dir: str = "."):
     """
     root_path = Path(root_dir).resolve()
     print(f"🧹 Starting cleanup in: {root_path}")
-    
+
     deleted_dirs = 0
     deleted_files = 0
 
@@ -41,7 +42,7 @@ def clean_project(root_dir: str = "."):
                     print(f"   Deleted directory: {dir_to_remove}")
                     deleted_dirs += 1
                     # Remove from search list so we don't walk into it
-                    dirs.remove(d) 
+                    dirs.remove(d)
                 except Exception as e:
                     print(f"   ❌ Error deleting {dir_to_remove}: {e}")
 
@@ -61,6 +62,7 @@ def clean_project(root_dir: str = "."):
     print(f"   Directories Removed: {deleted_dirs}")
     print(f"   Files Removed:       {deleted_files}")
     print("-" * 50)
+
 
 if __name__ == "__main__":
     clean_project()

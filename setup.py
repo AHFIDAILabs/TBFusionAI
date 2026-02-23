@@ -3,7 +3,8 @@ Setup configuration for TBFusionAI package.
 """
 
 from pathlib import Path
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 # Read README
 readme_file = Path(__file__).parent / "readme.md"
@@ -14,7 +15,9 @@ requirements_file = Path(__file__).parent / "requirements.txt"
 requirements = []
 if requirements_file.exists():
     with open(requirements_file) as f:
-        requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        requirements = [
+            line.strip() for line in f if line.strip() and not line.startswith("#")
+        ]
 
 setup(
     name="tbfusionai",
