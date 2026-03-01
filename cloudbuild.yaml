@@ -1,0 +1,5 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/tbfusionai-488920-h6/tbfusion-repo/api:test', '-f', 'docker/Dockerfile', '.']
+images:
+  - 'us-central1-docker.pkg.dev/tbfusionai-488920-h6/tbfusion-repo/api:test'

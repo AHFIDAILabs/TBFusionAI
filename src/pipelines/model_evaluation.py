@@ -199,7 +199,9 @@ class ModelEvaluationPipeline:
         soft = (avg >= self.config.ensemble.soft_voting_threshold).astype(int)
 
         weights = self.config.ensemble.model_weights
-        weighted = sum(probs[n] * weights.get(n, 1 / len(names)) for n in names)
+        weighted = np.sum(
+            [probs[n] * weights.get(n, 1 / len(names)) for n in names], axis=0
+        )
         weighted = (weighted >= self.config.ensemble.soft_voting_threshold).astype(int)
 
         return hard, soft, weighted, avg
