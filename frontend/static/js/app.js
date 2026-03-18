@@ -13,10 +13,16 @@ let mediaRecorder = null;
 let audioChunks = [];
 
 // API Base URL
-//const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = (() => {
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
 
-// For deployment on Render
-const API_BASE_URL = 'http://tbfusionai.onrender.com/api/v1';
+    if (isLocal) {
+        return 'http://127.0.0.1:8000/api/v1';
+    }
+
+    return `${window.location.origin}/api/v1`;
+})();
 
 
 // ============================================================================
