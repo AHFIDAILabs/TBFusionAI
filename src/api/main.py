@@ -40,6 +40,20 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+
+@app.middleware("http")
+async def normalize_forwarded_scheme(request: Request, call_next):
+    """Normalize request scheme behind reverse proxies (e.g., Render)."""
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    host = request.headers.get("host", "")
+
+    if forwarded_proto:
+        request.scope["scheme"] = forwarded_proto.split(",")[0].strip()
+    elif host.endswith(".onrender.com"):
+        request.scope["scheme"] = "https"
+
+    return await call_next(request)
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
