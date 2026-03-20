@@ -55,6 +55,7 @@ async def normalize_forwarded_scheme(request: Request, call_next):
 
     return await call_next(request)
 
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
