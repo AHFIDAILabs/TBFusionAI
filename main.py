@@ -34,28 +34,55 @@ console = Console()
 logger = get_logger(__name__)
 
 
+# def check_pipeline_status() -> dict:
+#     """Check which pipeline stages have been completed by verifying artifacts."""
+#     config = get_config()
+#     status = {
+#         "data_ingestion": False,
+#         "data_processing": False,
+#         "model_training": False,
+#         "model_evaluation": False,
+#     }
+
+#     # Check for artifact existence to determine completion status
+#     if (config.paths.dataset_path / "raw_data").exists():
+#         status["data_ingestion"] = True
+
+#     if (config.paths.labeled_data_path / "wav2vec2_balanced_ctgan.csv").exists():
+#         status["data_processing"] = True
+
+#     if (config.paths.models_path / "training_metadata.joblib").exists():
+#         status["model_training"] = True
+
+#     if (config.paths.models_path / "cost_sensitive_ensemble_model.joblib").exists():
+#         status["model_evaluation"] = True
+
+#     return status
+
+
 def check_pipeline_status() -> dict:
     """Check which pipeline stages have been completed by verifying artifacts."""
-    config = get_config()
+    # Robust path resolution
+    import os
+
+    BASE_DIR = Path(os.getenv("APP_HOME", Path(__file__).parent))
+
+    # Define absolute paths for the container environment
+    dataset_path = BASE_DIR / "artifacts" / "dataset"
+    labeled_path = BASE_DIR / "artifacts" / "labeled_data"
+    models_path = BASE_DIR / "artifacts" / "trained_models"
+
     status = {
-        "data_ingestion": False,
-        "data_processing": False,
-        "model_training": False,
-        "model_evaluation": False,
+        "data_ingestion": (dataset_path / "raw_data").exists(),
+        "data_processing": (labeled_path / "wav2vec2_balanced_ctgan.csv").exists(),
+        "model_training": (models_path / "training_metadata.joblib").exists(),
+        "model_evaluation": (
+            models_path / "cost_sensitive_ensemble_model.joblib"
+        ).exists(),
     }
 
-    # Check for artifact existence to determine completion status
-    if (config.paths.dataset_path / "raw_data").exists():
-        status["data_ingestion"] = True
-
-    if (config.paths.labeled_data_path / "wav2vec2_balanced_ctgan.csv").exists():
-        status["data_processing"] = True
-
-    if (config.paths.models_path / "training_metadata.joblib").exists():
-        status["model_training"] = True
-
-    if (config.paths.models_path / "cost_sensitive_ensemble_model.joblib").exists():
-        status["model_evaluation"] = True
+    # Optional: Keep a log so you can see exactly where it's looking in GCP logs
+    logger.debug(f"Checking artifacts in: {models_path}")
 
     return status
 
@@ -374,6 +401,48 @@ def clean(confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirma
     console.print("[green]✓ Cleanup complete![/green]\n")
 
 
+# @app.command()
+# def serve(
+#     host: str = typer.Option("0.0.0.0", "--host", help="Host to bind to"),
+#     port: int = typer.Option(8000, "--port", help="Port to bind to"),
+#     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
+#     workers: int = typer.Option(4, "--workers", help="Number of worker processes"),
+# ):
+#     """Start the FastAPI server for inference."""
+#     console.print(
+#         Panel.fit(
+#             f"[bold cyan]Starting TBFusionAI API Server[/bold cyan]\n\n"
+#             f"Host: {host}:{port}\n"
+#             f"Workers: {workers}\n"
+#             f"Auto-reload: {reload}",
+#             border_style="cyan",
+#         )
+#     )
+
+#     # Check if models are trained
+#     status = check_pipeline_status()
+#     if not status["model_training"]:
+#         console.print("\n[bold red]✗ No trained models found![/bold red]")
+#         console.print("[yellow]Run 'python main.py run-pipeline' first[/yellow]\n")
+#         sys.exit(1)
+
+#     try:
+#         import uvicorn
+
+#         uvicorn.run(
+#             "src.api.main:app",
+#             host=host,
+#             port=port,
+#             reload=reload,
+#             workers=1 if reload else workers,
+#             log_level="info",
+#         )
+#     except Exception as e:
+#         console.print(f"[bold red]✗ Server failed: {e}[/bold red]")
+#         logger.error(f"API server failed: {e}", exc_info=True)
+#         sys.exit(1)
+
+
 @app.command()
 def serve(
     host: str = typer.Option("0.0.0.0", "--host", help="Host to bind to"),
@@ -392,23 +461,36 @@ def serve(
         )
     )
 
-    # Check if models are trained
+    # Check status, but DON'T exit. Just warn.
     status = check_pipeline_status()
     if not status["model_training"]:
-        console.print("\n[bold red]✗ No trained models found![/bold red]")
-        console.print("[yellow]Run 'python main.py run-pipeline' first[/yellow]\n")
-        sys.exit(1)
+        console.print(
+            "\n[bold yellow]⚠ WARNING: No trained models found locally.[/bold yellow]"
+        )
+        console.print(
+            "[dim]The API will start in 'degraded mode'. Check /api/v1/status once live.[/dim]\n"
+        )
+    else:
+        console.print("[green]✓ Models detected. Ready for inference.[/green]\n")
 
     try:
+        import sys
+
         import uvicorn
+
+        # CRITICAL FIX for Windows & Cloud Run
+        # Windows doesn't support multiple workers with uvicorn.run
+        actual_workers = 1 if (reload or sys.platform == "win32") else workers
 
         uvicorn.run(
             "src.api.main:app",
             host=host,
             port=port,
             reload=reload,
-            workers=1 if reload else workers,
+            workers=actual_workers,
             log_level="info",
+            proxy_headers=True,  # Recommended for Cloud Run/GCP
+            forwarded_allow_ips="*",  # Recommended for Cloud Run/GCP
         )
     except Exception as e:
         console.print(f"[bold red]✗ Server failed: {e}[/bold red]")

@@ -10,6 +10,7 @@ Entry point for the API server with:
 - Graceful degradation when models not loaded
 """
 
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -64,17 +65,32 @@ app.add_middleware(
 )
 
 # Setup templates and static files
-project_root = Path(__file__).parent.parent.parent
-templates_dir = project_root / "frontend" / "templates"
-static_dir = project_root / "frontend" / "static"
+# APP_HOME should be set to /app in your Dockerfile
+BASE_DIR = Path(os.getenv("APP_HOME", Path(__file__).parent.parent.parent))
+templates_dir = BASE_DIR / "frontend" / "templates"
+static_dir = BASE_DIR / "frontend" / "static"
 
 templates = Jinja2Templates(directory=str(templates_dir))
 
-# Mount static files
+# Mount static files with absolute path verification
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    logger.info(f"✓ Static files mounted from: {static_dir.absolute()}")
 else:
-    logger.warning(f"Static directory not found: {static_dir}")
+    logger.error(f"✗ CRITICAL: Static directory not found at {static_dir.absolute()}")
+
+# # Setup templates and static files
+# project_root = Path(__file__).parent.parent.parent
+# templates_dir = project_root / "frontend" / "templates"
+# static_dir = project_root / "frontend" / "static"
+
+# templates = Jinja2Templates(directory=str(templates_dir))
+
+# # Mount static files
+# if static_dir.exists():
+#     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+# else:
+#     logger.warning(f"Static directory not found: {static_dir}")
 
 
 # Exception handlers
@@ -246,13 +262,13 @@ async def shutdown_event():
     logger.info("Shutting down TBFusionAI API")
 
 
-if __name__ == "__main__":
-    import uvicorn
+# if __name__ == "__main__":
+#     import uvicorn
 
-    uvicorn.run(
-        "src.api.main:app",
-        host=config.api.host,
-        port=config.api.port,
-        reload=config.api.reload,
-        workers=config.api.workers,
-    )
+#     uvicorn.run(
+#         "src.api.main:app",
+#         host=config.api.host,
+#         port=config.api.port,
+#         reload=config.api.reload,
+#         workers=config.api.workers,
+#     )
