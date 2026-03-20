@@ -19,20 +19,20 @@ ENV/
 .venv
 
 # Artifacts & Data
-artifacts/
-*.joblib
-*.pkl
-*.csv
-*.wav
-*.mp3
+# artifacts/
+# *.joblib
+# *.pkl
+# *.csv
+# *.wav
+# *.mp3
 
 # Keep essential directories
 !artifacts/.gitkeep
 
 # Tests
-tests/
-.pytest_cache/
-htmlcov/
+# tests/
+# .pytest_cache/
+# htmlcov/
 
 # IDE
 .vscode/
@@ -55,11 +55,11 @@ notebooks/
 *.ipynb
 
 # Docker
-docker-compose.override.yml
-Dockerfile
-.dockerignore
-docker-compose.yml
-docker/
+# docker-compose.override.yml
+# Dockerfile
+# .dockerignore
+# docker-compose.yml
+# docker/
 
 # CI/CD
 .github/

@@ -63,7 +63,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # To this (it tells uvicorn to use $PORT, or default to 8000 if not set):
-CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
+# Do NOT do this: CMD ["uvicorn", "src.api.main:app", ...]
+# DO THIS:
+CMD ["sh", "-c", "python main.py serve --host 0.0.0.0 --port ${PORT:-8000}"]
 
 
 # # Multi-stage Docker build for TBFusionAI
