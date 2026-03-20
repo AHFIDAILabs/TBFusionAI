@@ -445,10 +445,12 @@ def clean(confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirma
 
 @app.command()
 def serve(
-    host: str = typer.Option("0.0.0.0", "--host", help="Host to bind to"),
-    port: int = typer.Option(8000, "--port", help="Port to bind to"),
+    host: str = typer.Option("0.0.0.0", "--host"),
+    port: int = typer.Option(8080, "--port"),  # Aligned with GCP Default
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
-    workers: int = typer.Option(4, "--workers", help="Number of worker processes"),
+    workers: int = typer.Option(
+        1, "--workers", help="Workers (set to 1 for Cloud Run)"
+    ),
 ):
     """Start the FastAPI server for inference."""
     console.print(
