@@ -98,19 +98,6 @@ else:
     # This will print the exact path it's searching so you can debug in the terminal
     logger.error(f"✗ CRITICAL: Static directory NOT FOUND at {static_dir.absolute()}")
 
-# # Setup templates and static files
-# project_root = Path(__file__).parent.parent.parent
-# templates_dir = project_root / "frontend" / "templates"
-# static_dir = project_root / "frontend" / "static"
-
-# templates = Jinja2Templates(directory=str(templates_dir))
-
-# # Mount static files
-# if static_dir.exists():
-#     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-# else:
-#     logger.warning(f"Static directory not found: {static_dir}")
-
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)

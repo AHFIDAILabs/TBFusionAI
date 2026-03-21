@@ -45,7 +45,7 @@ router = APIRouter()
 
 @router.get(
     "/health",
-    response_model=HealthCheckResponse,
+    # response_model=HealthCheckResponse,
     summary="Health Check",
     description="Check API health and model status",
 )
@@ -179,7 +179,8 @@ async def predict_from_audio(
 
 @router.post("/predict/features", response_model=PredictionResponse)
 async def predict_from_features(
-    features: Dict[str, float], predictor: TBPredictor = Depends(get_predictor)
+    features: Dict[str, int | float | str],
+    predictor: TBPredictor = Depends(get_predictor),
 ) -> PredictionResponse:
     try:
         result = await predictor.predict_from_features(features)
@@ -196,9 +197,24 @@ async def get_model_info(
     return ModelInfoResponse(**predictor.get_model_info())
 
 
+@router.get("/model/feature-importance", response_model=FeatureImportanceResponse)
+async def get_feature_importance(
+    top_n: int = 5, predictor: TBPredictor = Depends(get_predictor)
+) -> FeatureImportanceResponse:
+    """
+    Get feature importance rankings from the model.
+    """
+    try:
+        # This call requires the method to exist in TBPredictor class
+        importance = predictor.get_feature_importance(top_n=top_n)
+        return FeatureImportanceResponse(features=importance, top_n=top_n)
+    except Exception as e:
+        logger.error(f"Failed to get feature importance: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post(
     "/audio/metrics",
-    response_model=AudioMetrics,
     summary="Get Audio Metrics",
 )
 async def get_audio_metrics(
