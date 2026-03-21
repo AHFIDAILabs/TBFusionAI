@@ -65,12 +65,29 @@ app.add_middleware(
     allow_headers=config.api.cors_headers,
 )
 
+# ============================================================================
 # Setup templates and static files
-# APP_HOME should be set to /app in your Dockerfile
-BASE_DIR = Path(os.getenv("APP_HOME", Path(__file__).parent.parent.parent))
+# ============================================================================
+
+# 1. Start from the directory where this script (main.py) is located
+CURRENT_DIR = Path(__file__).resolve().parent
+
+# 2. Find the true Project Root by searching upwards for the 'frontend' directory
+# This handles cases where main.py might be in / or /src/api/
+PROJECT_ROOT = CURRENT_DIR
+while PROJECT_ROOT.parent != PROJECT_ROOT:
+    if (PROJECT_ROOT / "frontend").exists():
+        break
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+# 3. Use the Environment Variable APP_HOME if it exists (for Docker),
+# otherwise use the PROJECT_ROOT we just found.
+BASE_DIR = Path(os.getenv("APP_HOME", PROJECT_ROOT))
+
 templates_dir = BASE_DIR / "frontend" / "templates"
 static_dir = BASE_DIR / "frontend" / "static"
 
+# Initialize Jinja2
 templates = Jinja2Templates(directory=str(templates_dir))
 
 # Mount static files with absolute path verification
@@ -78,7 +95,8 @@ if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     logger.info(f"✓ Static files mounted from: {static_dir.absolute()}")
 else:
-    logger.error(f"✗ CRITICAL: Static directory not found at {static_dir.absolute()}")
+    # This will print the exact path it's searching so you can debug in the terminal
+    logger.error(f"✗ CRITICAL: Static directory NOT FOUND at {static_dir.absolute()}")
 
 # # Setup templates and static files
 # project_root = Path(__file__).parent.parent.parent
