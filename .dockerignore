@@ -22,28 +22,19 @@ venv/
 env/
 .venv/
 
-# --- 4. DATA & MODELS (The Critical Part) ---
-# THE CULPRIT: Large Data & Caches ---
-# Ignore the entire artifacts folder first...
-artifacts/*
+# --- 4. DATA & MODELS ---
+# Blacklist only the heavy/unnecessary folders
+artifacts/model_cache/
+artifacts/dataset/
+artifacts/logs/
+artifacts/reports/
 *.zip
 *.tar.gz
 
-# ...Then explicitly ignore the giant cache folders
-artifacts/model_cache/
-artifacts/dataset/
-
-# --- 5. ALLOW ONLY WHAT IS NECESSARY ---
-# We ONLY want the trained ensemble model
+# --- 5. ALLOW THE TRAINED MODELS ---
+# We keep the trained models and the directory structure
 !artifacts/trained_models/
 !artifacts/trained_models/*.joblib
-
-# --- 5. FRONTEND & STATIC ASSETS ---
-# Do NOT ignore these, otherwise the website will have no style/icons
-!frontend/static/
-!frontend/static/css/
-!frontend/static/js/
-!frontend/static/assets/
 
 # # Artifacts directory (downloaded models, processed data, etc.)
 # # artifacts/

@@ -5,6 +5,7 @@ FROM python:3.10-slim-bookworm AS builder
 
 WORKDIR /app
 
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -13,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
+# Install dependencies to a local user directory
 RUN pip install --upgrade pip && \
     pip install --user --no-cache-dir -r requirements.txt
 
@@ -21,44 +23,48 @@ RUN pip install --upgrade pip && \
 # ============================================================================
 FROM python:3.10-slim-bookworm AS runtime
 
+# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/home/appuser/.local/bin:${PATH}"
 
+# Install runtime-only system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     ffmpeg \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create application user and set up directory structure
+# 1. Create application user and directory structure
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/artifacts/trained_models /app/artifacts/logs /app/artifacts/reports && \
     chown -R appuser:appuser /app
 
 WORKDIR /app
 
-# 1. Copy the installed python packages from builder
+# 2. Copy the installed python packages from the builder stage
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-# 2. Copy the model artifacts explicitly first to ensure they exist
-# This ensures /app/artifacts/trained_models/cost_sensitive_ensemble_model.joblib is present
+# 3. Explicitly copy model artifacts (Fail fast if missing)
+# This confirms /app/artifacts/trained_models/cost_sensitive_ensemble_model.joblib is included
 COPY --chown=appuser:appuser artifacts/ /app/artifacts/
 
-# 3. Copy the rest of the application code
+# 4. Copy the rest of the application code
 COPY --chown=appuser:appuser . .
 
-# Ensure permissions are correct across the board
+# Final permission check for the appuser
 RUN chown -R appuser:appuser /app/artifacts
 
 USER appuser
 
+# Cloud Run uses dynamic ports, but usually defaults to 8080
 EXPOSE 8080
 
+# Healthcheck adjusted for the dynamic $PORT environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8080}/api/v1/health || exit 1
 
-# Using the shell form to ensure $PORT is expanded correctly for Cloud Run
+# Start the application using the shell form to expand the $PORT variable
 CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
 
 
