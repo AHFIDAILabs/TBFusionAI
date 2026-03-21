@@ -445,8 +445,8 @@ def clean(confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirma
 
 @app.command()
 def serve(
-    host: str = typer.Option("0.0.0.0", "--host"),
-    port: int = typer.Option(8080, "--port"),  # Aligned with GCP Default
+    host: str = typer.Argument("0.0.0.0", help="Host to bind to"),
+    port: int = typer.Argument(8080, help="Port to bind to"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
     workers: int = typer.Option(
         1, "--workers", help="Workers (set to 1 for Cloud Run)"

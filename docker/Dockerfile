@@ -72,4 +72,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # CMD ["python", "main.py", "serve", "--host", "0.0.0.0", "--port", "${PORT}"]
 
 # RIGHT (Shell form - variables expand correctly)
-CMD sh -c "python main.py serve --host 0.0.0.0 --port ${PORT:-8080}"
+# CMD sh -c "python main.py serve --host 0.0.0.0 --port ${PORT:-8080}"
+# Simple and direct: No flags, just the values
+CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
