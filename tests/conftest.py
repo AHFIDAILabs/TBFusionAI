@@ -1,9 +1,6 @@
 """
 Pytest configuration and fixtures.
-Provides:
-- temp_dir: Restored for utility tests.
-- temp_models_dir: For AI model artifacts.
-- mock_model_artifacts: Creates joblib files with correct keys.
+Restored missing sample data fixtures for pipeline testing.
 """
 
 import io
@@ -41,6 +38,25 @@ def sample_clinical_features() -> Dict:
 
 
 @pytest.fixture(scope="session")
+def sample_audio_features() -> Dict:
+    """Fixture for audio-specific features extracted from wav2vec."""
+    features = {f"feat_{i}": np.random.randn() for i in range(768)}
+    features.update({"duration": 1.5, "rms": 0.05, "snr": 15.0})
+    return features
+
+
+@pytest.fixture(scope="session")
+def sample_full_features(sample_clinical_features, sample_audio_features) -> Dict:
+    """Fixture combining clinical and audio features for model input."""
+    full = sample_clinical_features.copy()
+    full.update(sample_audio_features)
+    # Add dummy noise features expected by the predictor
+    for i in range(10):
+        full[f"noise_{i}"] = 0.0
+    return full
+
+
+@pytest.fixture(scope="session")
 def sample_audio_bytes() -> bytes:
     sample_rate = 16000
     duration = 1.0
@@ -60,7 +76,6 @@ def sample_audio_bytes() -> bytes:
 
 @pytest.fixture(scope="session")
 def temp_dir(tmp_path_factory):
-    """FIX: Restored for existing utility tests in test_utils.py."""
     return tmp_path_factory.mktemp("data")
 
 
@@ -132,6 +147,142 @@ def sample_prediction_form_data(sample_clinical_features) -> Dict:
     data = sample_clinical_features.copy()
     data.update({"generate_spectrogram": "true", "validate_quality": "false"})
     return data
+
+
+# """
+# Pytest configuration and fixtures.
+# Provides:
+# - temp_dir: Restored for utility tests.
+# - temp_models_dir: For AI model artifacts.
+# - mock_model_artifacts: Creates joblib files with correct keys.
+# """
+
+# import io
+# import wave
+# from pathlib import Path
+# from typing import Dict
+
+# import joblib
+# import numpy as np
+# import pytest
+# from fastapi.testclient import TestClient
+# from sklearn.ensemble import RandomForestClassifier
+# from sklearn.preprocessing import StandardScaler
+
+# from src.config import get_config
+
+
+# @pytest.fixture(scope="session")
+# def test_config():
+#     return get_config()
+
+
+# @pytest.fixture(scope="session")
+# def sample_clinical_features() -> Dict:
+#     return {
+#         "age": 45,
+#         "sex": "Male",
+#         "reported_cough_dur": 21,
+#         "tb_prior": "No",
+#         "hemoptysis": "No",
+#         "weight_loss": "Yes",
+#         "fever": "Yes",
+#         "night_sweats": "No",
+#     }
+
+
+# @pytest.fixture(scope="session")
+# def sample_audio_bytes() -> bytes:
+#     sample_rate = 16000
+#     duration = 1.0
+#     num_samples = int(sample_rate * duration)
+#     t = np.linspace(0, duration, num_samples)
+#     audio_data = (np.sin(2 * np.pi * 440.0 * t) * 32767).astype(np.int16)
+
+#     buffer = io.BytesIO()
+#     with wave.open(buffer, "wb") as wav_file:
+#         wav_file.setnchannels(1)
+#         wav_file.setsampwidth(2)
+#         wav_file.setframerate(sample_rate)
+#         wav_file.writeframes(audio_data.tobytes())
+#     buffer.seek(0)
+#     return buffer.read()
+
+
+# @pytest.fixture(scope="session")
+# def temp_dir(tmp_path_factory):
+#     """FIX: Restored for existing utility tests in test_utils.py."""
+#     return tmp_path_factory.mktemp("data")
+
+
+# @pytest.fixture(scope="session")
+# def temp_models_dir(tmp_path_factory):
+#     return tmp_path_factory.mktemp("models")
+
+
+# @pytest.fixture(scope="session")
+# def mock_model_artifacts(temp_models_dir):
+#     base_models = {
+#         "CatBoost": RandomForestClassifier(n_estimators=2, random_state=42),
+#         "Meta-XGBoost": RandomForestClassifier(n_estimators=2, random_state=42),
+#     }
+#     X_dummy = np.random.randn(10, 786)
+#     y_dummy = np.random.randint(0, 2, 10)
+#     for m in base_models.values():
+#         m.fit(X_dummy, y_dummy)
+
+#     scaler = StandardScaler().fit(X_dummy)
+
+#     ensemble_data = {
+#         "models": base_models,
+#         "threshold": 0.35,
+#         "scaler": scaler,
+#         "strategy": "cost_sensitive",
+#         "audit": {"drift_score": 0.01, "status": "healthy"},
+#         "integrity_hash": "test_hash_001",
+#     }
+#     joblib.dump(ensemble_data, temp_models_dir / "cost_sensitive_ensemble_model.joblib")
+
+#     metadata = {
+#         "feature_columns": [f"feat_{i}" for i in range(768)]
+#         + [
+#             "age",
+#             "sex",
+#             "reported_cough_dur",
+#             "tb_prior",
+#             "hemoptysis",
+#             "weight_loss",
+#             "fever",
+#             "night_sweats",
+#         ]
+#         + [f"noise_{i}" for i in range(10)],
+#         "n_features": 786,
+#         "model_version": "1.0.0-test",
+#     }
+#     joblib.dump(metadata, temp_models_dir / "training_metadata.joblib")
+#     return temp_models_dir
+
+
+# @pytest.fixture(autouse=True)
+# def setup_test_env(monkeypatch, mock_model_artifacts, test_config):
+#     monkeypatch.setattr(test_config.paths, "models_path", mock_model_artifacts)
+#     import src.config
+
+#     monkeypatch.setattr(src.config, "get_config", lambda: test_config)
+
+
+# @pytest.fixture(scope="function")
+# def api_client():
+#     from src.api.main import app
+
+#     return TestClient(app)
+
+
+# @pytest.fixture(scope="session")
+# def sample_prediction_form_data(sample_clinical_features) -> Dict:
+#     data = sample_clinical_features.copy()
+#     data.update({"generate_spectrogram": "true", "validate_quality": "false"})
+#     return data
 
 
 # """
