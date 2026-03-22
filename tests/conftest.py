@@ -1,6 +1,10 @@
 """
-Pytest configuration and fixtures.
-Restored missing sample data fixtures for pipeline testing.
+Pytest configuration and fixtures - UPDATED FOR CURRENT STRUCTURE.
+
+Provides common fixtures for testing:
+- Sample data (Clinical, Audio, DataFrames)
+- Mock Model generation (Ensemble, Scaler, Metadata)
+- Environment Isolation (Monkeypatching paths)
 """
 
 import io
@@ -20,11 +24,13 @@ from src.config import get_config
 
 @pytest.fixture(scope="session")
 def test_config():
+    """Get the base configuration object."""
     return get_config()
 
 
 @pytest.fixture(scope="session")
 def sample_clinical_features() -> Dict:
+    """Sample clinical features for testing."""
     return {
         "age": 45,
         "sex": "Male",
@@ -38,29 +44,35 @@ def sample_clinical_features() -> Dict:
 
 
 @pytest.fixture(scope="session")
-def sample_audio_features() -> Dict:
-    """Fixture for audio-specific features extracted from wav2vec."""
-    features = {f"feat_{i}": np.random.randn() for i in range(768)}
-    features.update({"duration": 1.5, "rms": 0.05, "snr": 15.0})
-    return features
+def sample_audio_features() -> np.ndarray:
+    """Sample audio features (768-dimensional)."""
+    return np.random.randn(768)
 
 
 @pytest.fixture(scope="session")
 def sample_full_features(sample_clinical_features, sample_audio_features) -> Dict:
-    """Fixture combining clinical and audio features for model input."""
-    full = sample_clinical_features.copy()
-    full.update(sample_audio_features)
-    # Add dummy noise features expected by the predictor
+    """Sample full feature set (clinical + audio)."""
+    features = sample_clinical_features.copy()
+
+    # Add audio features
+    for i, value in enumerate(sample_audio_features):
+        features[f"feat_{i}"] = float(value)
+
+    # Add noise features
     for i in range(10):
-        full[f"noise_{i}"] = 0.0
-    return full
+        features[f"noise_{i}"] = 0.0
+
+    return features
 
 
 @pytest.fixture(scope="session")
 def sample_audio_bytes() -> bytes:
+    """Generates a valid 1-second WAV file in memory for testing."""
     sample_rate = 16000
     duration = 1.0
     num_samples = int(sample_rate * duration)
+
+    # Generate simple sine wave (A4 note)
     t = np.linspace(0, duration, num_samples)
     audio_data = (np.sin(2 * np.pi * 440.0 * t) * 32767).astype(np.int16)
 
@@ -70,33 +82,48 @@ def sample_audio_bytes() -> bytes:
         wav_file.setsampwidth(2)
         wav_file.setframerate(sample_rate)
         wav_file.writeframes(audio_data.tobytes())
+
     buffer.seek(0)
     return buffer.read()
 
 
 @pytest.fixture(scope="session")
 def temp_dir(tmp_path_factory):
+    """
+    Generic temporary directory for utility tests.
+    Fixes the 'fixture not found' errors in test_utils.py.
+    """
     return tmp_path_factory.mktemp("data")
 
 
 @pytest.fixture(scope="session")
 def temp_models_dir(tmp_path_factory):
+    """Create a temporary directory for mock model artifacts."""
     return tmp_path_factory.mktemp("models")
 
 
 @pytest.fixture(scope="session")
 def mock_model_artifacts(temp_models_dir):
+    """
+    Creates real .joblib files in a temp directory with the NEW schema.
+    This ensures TBPredictor can actually 'load' something during tests.
+    """
+    # 1. Create Mock Base Models
     base_models = {
         "CatBoost": RandomForestClassifier(n_estimators=2, random_state=42),
         "Meta-XGBoost": RandomForestClassifier(n_estimators=2, random_state=42),
     }
+
+    # Fit with dummy data (786 features: 768 audio + 8 clinical + 10 noise)
     X_dummy = np.random.randn(10, 786)
     y_dummy = np.random.randint(0, 2, 10)
     for m in base_models.values():
         m.fit(X_dummy, y_dummy)
 
+    # 2. Create Scaler
     scaler = StandardScaler().fit(X_dummy)
 
+    # 3. Save Ensemble (Using the updated 'models' and 'threshold' keys)
     ensemble_data = {
         "models": base_models,
         "threshold": 0.35,
@@ -107,6 +134,7 @@ def mock_model_artifacts(temp_models_dir):
     }
     joblib.dump(ensemble_data, temp_models_dir / "cost_sensitive_ensemble_model.joblib")
 
+    # 4. Save Metadata
     metadata = {
         "feature_columns": [f"feat_{i}" for i in range(768)]
         + [
@@ -124,12 +152,20 @@ def mock_model_artifacts(temp_models_dir):
         "model_version": "1.0.0-test",
     }
     joblib.dump(metadata, temp_models_dir / "training_metadata.joblib")
+
     return temp_models_dir
 
 
 @pytest.fixture(autouse=True)
 def setup_test_env(monkeypatch, mock_model_artifacts, test_config):
+    """
+    CRITICAL: This fixture overrides the config paths globally during tests.
+    It forces the app to load the MOCK models we just created above.
+    """
+    # Patch the path in the config object
     monkeypatch.setattr(test_config.paths, "models_path", mock_model_artifacts)
+
+    # Patch the get_config function itself so any new calls return our patched config
     import src.config
 
     monkeypatch.setattr(src.config, "get_config", lambda: test_config)
@@ -137,6 +173,7 @@ def setup_test_env(monkeypatch, mock_model_artifacts, test_config):
 
 @pytest.fixture(scope="function")
 def api_client():
+    """FastAPI test client initialized with the patched environment."""
     from src.api.main import app
 
     return TestClient(app)
@@ -144,8 +181,14 @@ def api_client():
 
 @pytest.fixture(scope="session")
 def sample_prediction_form_data(sample_clinical_features) -> Dict:
+    """Standardized form data for /predict endpoint."""
     data = sample_clinical_features.copy()
-    data.update({"generate_spectrogram": "true", "validate_quality": "false"})
+    data.update(
+        {
+            "generate_spectrogram": "true",
+            "validate_quality": "false",  # Default to false for unit tests
+        }
+    )
     return data
 
 

@@ -1,5 +1,5 @@
 """
-API routes for TBFusionAI - Updated with pointer resets for BytesIO.
+API routes for TBFusionAI - FIXED: BytesIO handling for multiple operations.
 
 Defines endpoints for:
 - Health checks (works without models)
@@ -45,7 +45,6 @@ router = APIRouter()
 
 @router.get(
     "/health",
-    # response_model=HealthCheckResponse,
     summary="Health Check",
     description="Check API health and model status",
 )
@@ -136,23 +135,17 @@ async def predict_from_audio(
     validated_file: UploadFile = Depends(validate_audio_file),
 ) -> PredictionResponse:
     """
-    Make TB prediction from audio file with Pointer Reset Fix.
+    Make TB prediction from audio file.
+
+    CRITICAL FIX: Pass raw bytes to predictor, let it handle BytesIO creation.
     """
     try:
         logger.info(f"Processing prediction for: {audio_file.filename}")
 
-        # 1. Read audio file into memory
+        # Read audio file into memory ONCE
         audio_bytes = await audio_file.read()
 
-        # 2. Check for empty bytes
-        if not audio_bytes:
-            raise ValueError("The uploaded audio file is empty.")
-
-        audio_io = io.BytesIO(audio_bytes)
-
-        # 3. CRITICAL FIX: Reset pointer to start of stream for librosa/soundfile
-        audio_io.seek(0)
-
+        # Prepare clinical features
         clinical_features = {
             "age": age,
             "sex": sex,
@@ -164,9 +157,12 @@ async def predict_from_audio(
             "night_sweats": night_sweats,
         }
 
-        # 4. Make prediction
+        # CRITICAL FIX: Pass bytes directly, let predictor handle BytesIO
         result = await predictor.predict_from_audio(
-            audio_io, clinical_features, generate_spectrogram, validate_quality
+            audio_bytes,  # Pass bytes, not BytesIO
+            clinical_features,
+            generate_spectrogram,
+            validate_quality,
         )
 
         return PredictionResponse(**result)
@@ -178,7 +174,7 @@ async def predict_from_audio(
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Inference Engine Error: {str(e)}",
+            detail=f"Prediction Error: {str(e)}",
         )
 
 
@@ -187,6 +183,7 @@ async def predict_from_features(
     features: Dict[str, int | float | str],
     predictor: TBPredictor = Depends(get_predictor),
 ) -> PredictionResponse:
+    """Make prediction from pre-extracted features."""
     try:
         result = await predictor.predict_from_features(features)
         return PredictionResponse(**result)
@@ -199,6 +196,7 @@ async def predict_from_features(
 async def get_model_info(
     predictor: TBPredictor = Depends(get_predictor),
 ) -> ModelInfoResponse:
+    """Get model information."""
     return ModelInfoResponse(**predictor.get_model_info())
 
 
@@ -227,16 +225,15 @@ async def get_audio_metrics(
     validated_file: UploadFile = Depends(validate_audio_file),
 ) -> AudioMetrics:
     """
-    Calculate audio metrics with pointer safety.
+    Calculate audio metrics.
+
+    CRITICAL FIX: Pass bytes, not BytesIO.
     """
     try:
         audio_bytes = await audio_file.read()
-        audio_io = io.BytesIO(audio_bytes)
 
-        # CRITICAL FIX: Reset pointer to start of stream
-        audio_io.seek(0)
-
-        metrics = predictor.audio_preprocessor.calculate_audio_metrics(audio_io)
+        # Pass bytes directly
+        metrics = predictor.audio_preprocessor.calculate_audio_metrics(audio_bytes)
 
         return AudioMetrics(
             duration=metrics.get("duration", 0.0),
@@ -248,8 +245,8 @@ async def get_audio_metrics(
             silence_ratio=metrics.get("silence_ratio", 0.0),
         )
     except Exception as e:
-        logger.error(f"Metrics calculation failed: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Audio metrics failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # """
