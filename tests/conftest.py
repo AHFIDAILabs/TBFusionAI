@@ -88,6 +88,15 @@ def sample_audio_bytes() -> bytes:
 
 
 @pytest.fixture(scope="session")
+def temp_dir(tmp_path_factory):
+    """
+    Generic temporary directory for utility tests.
+    Fixes the 'fixture not found' errors in test_utils.py.
+    """
+    return tmp_path_factory.mktemp("data")
+
+
+@pytest.fixture(scope="session")
 def temp_models_dir(tmp_path_factory):
     """Create a temporary directory for mock model artifacts."""
     return tmp_path_factory.mktemp("models")
