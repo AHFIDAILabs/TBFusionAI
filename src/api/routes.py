@@ -136,16 +136,21 @@ async def predict_from_audio(
     validated_file: UploadFile = Depends(validate_audio_file),
 ) -> PredictionResponse:
     """
-    Make TB prediction from audio file.
+    Make TB prediction from audio file with Pointer Reset Fix.
     """
     try:
         logger.info(f"Processing prediction for: {audio_file.filename}")
 
-        # Read audio file into memory
+        # 1. Read audio file into memory
         audio_bytes = await audio_file.read()
+
+        # 2. Check for empty bytes
+        if not audio_bytes:
+            raise ValueError("The uploaded audio file is empty.")
+
         audio_io = io.BytesIO(audio_bytes)
 
-        # CRITICAL FIX: Reset pointer to start of stream for librosa/soundfile
+        # 3. CRITICAL FIX: Reset pointer to start of stream for librosa/soundfile
         audio_io.seek(0)
 
         clinical_features = {
@@ -159,7 +164,7 @@ async def predict_from_audio(
             "night_sweats": night_sweats,
         }
 
-        # Make prediction
+        # 4. Make prediction
         result = await predictor.predict_from_audio(
             audio_io, clinical_features, generate_spectrogram, validate_quality
         )
@@ -173,7 +178,7 @@ async def predict_from_audio(
         logger.error(f"Prediction failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Audio Loading Error: {str(e)}",
+            detail=f"Inference Engine Error: {str(e)}",
         )
 
 
@@ -205,7 +210,6 @@ async def get_feature_importance(
     Get feature importance rankings from the model.
     """
     try:
-        # This call requires the method to exist in TBPredictor class
         importance = predictor.get_feature_importance(top_n=top_n)
         return FeatureImportanceResponse(features=importance, top_n=top_n)
     except Exception as e:
@@ -223,7 +227,7 @@ async def get_audio_metrics(
     validated_file: UploadFile = Depends(validate_audio_file),
 ) -> AudioMetrics:
     """
-    Calculate audio metrics.
+    Calculate audio metrics with pointer safety.
     """
     try:
         audio_bytes = await audio_file.read()
@@ -243,10 +247,9 @@ async def get_audio_metrics(
             clipping_ratio=metrics.get("clipping_ratio", 0.0),
             silence_ratio=metrics.get("silence_ratio", 0.0),
         )
-
     except Exception as e:
-        logger.error(f"Metrics failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Metrics calculation failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # """

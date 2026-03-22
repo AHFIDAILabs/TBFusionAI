@@ -29,12 +29,7 @@ logger = get_logger(__name__)
 class TBPredictor:
     """
     High-level TB prediction interface.
-
-    Orchestrates the complete prediction pipeline:
-    1. Audio preprocessing
-    2. Feature extraction
-    3. Ensemble prediction
-    4. Result interpretation
+    Orchestrates the complete prediction pipeline with buffer safety.
     """
 
     def __init__(self):
@@ -63,18 +58,14 @@ class TBPredictor:
     ) -> Dict:
         """
         Make TB prediction from audio file and clinical features.
-
-        Args:
-            audio_input: Audio file path, bytes, or BytesIO
-            clinical_features: Dictionary of clinical features
-            generate_spectrogram: Whether to generate spectrogram image
-
-        Returns:
-            Dictionary with prediction results
         """
         logger.info("Starting prediction from audio")
 
         try:
+            # DEFENSIVE: Ensure buffer is at start
+            if isinstance(audio_input, io.BytesIO):
+                audio_input.seek(0)
+
             # Step 1: Extract audio features
             logger.info("Extracting audio features...")
             audio_features = self.audio_preprocessor.extract_features(
@@ -82,11 +73,14 @@ class TBPredictor:
             )
 
             # Step 2: Generate spectrogram if requested
-            spectrogram_image = None
             spectrogram_base64 = None
 
             if generate_spectrogram:
                 logger.info("Generating spectrogram...")
+                # Rewind again because extract_features just read the buffer
+                if isinstance(audio_input, io.BytesIO):
+                    audio_input.seek(0)
+
                 spectrogram_image = self.audio_preprocessor.generate_spectrogram(
                     audio_input
                 )
@@ -123,12 +117,6 @@ class TBPredictor:
     ) -> Dict:
         """
         Make TB prediction from prepared features.
-
-        Args:
-            features: Dictionary of all features (clinical + audio)
-
-        Returns:
-            Dictionary with prediction results
         """
         # Validate features
         is_valid, error_msg = self.feature_preprocessor.validate_features(
@@ -185,47 +173,24 @@ class TBPredictor:
     def _prepare_feature_array(
         self, features: Dict[str, Union[int, float, str]]
     ) -> np.ndarray:
-        """
-        Prepare feature array in correct order.
-
-        Args:
-            features: Feature dictionary
-
-        Returns:
-            Feature array with shape (1, n_features)
-        """
         feature_columns = self.metadata["feature_columns"]
 
-        # Add noise features if missing (for compatibility)
+        # Add noise features if missing
         for noise_col in self.metadata.get("noise_features", []):
             if noise_col not in features:
                 features[noise_col] = 0.0
 
-        # Extract features in correct order
         feature_values = []
         for col in feature_columns:
             if col in features:
                 feature_values.append(float(features[col]))
             else:
-                # Use default value if missing
                 feature_values.append(0.0)
                 logger.warning(f"Feature '{col}' not found, using default value 0.0")
 
-        # Convert to array
-        X = np.array(feature_values).reshape(1, -1)
-
-        return X
+        return np.array(feature_values).reshape(1, -1)
 
     def _classify_confidence(self, confidence: float) -> str:
-        """
-        Classify confidence score into level.
-
-        Args:
-            confidence: Confidence score
-
-        Returns:
-            Confidence level string
-        """
         if confidence > self.config.inference.high_confidence_threshold:
             return "High"
         elif confidence < self.config.inference.uncertainty_threshold:
@@ -236,128 +201,32 @@ class TBPredictor:
     def _generate_recommendation(
         self, prediction: int, probability: float, confidence_level: str
     ) -> str:
-        """
-        Generate clinical recommendation based on prediction.
-
-        Args:
-            prediction: Prediction class (0 or 1)
-            probability: Prediction probability
-            confidence_level: Confidence level
-
-        Returns:
-            Recommendation text
-        """
         if prediction == 1:  # TB+
             if confidence_level == "High":
-                return (
-                    "High probability of TB detected. "
-                    "Immediate clinical follow-up and confirmatory testing recommended. "
-                    "This patient should be prioritised for diagnostic evaluation including "
-                    "sputum microscopy, culture, and chest X-ray."
-                )
+                return "High probability of TB detected. Immediate clinical follow-up and confirmatory testing recommended."
             elif confidence_level == "Medium":
-                return (
-                    "Moderate probability of TB detected. "
-                    "Clinical evaluation and follow-up testing strongly recommended. "
-                    "Consider patient's symptoms, exposure history, and risk factors. "
-                    "Proceed with standard TB diagnostic workup."
-                )
-            else:  # Uncertain
-                return (
-                    "TB possible but prediction uncertain. "
-                    "Comprehensive clinical assessment recommended. "
-                    "Multiple diagnostic tests may be needed for definitive diagnosis. "
-                    "Consider repeat testing if symptoms persist."
-                )
+                return "Moderate probability of TB detected. Clinical evaluation and follow-up testing strongly recommended."
+            else:
+                return "TB possible but prediction uncertain. Comprehensive clinical assessment recommended."
         else:  # TB-
             if confidence_level == "High":
-                return (
-                    "Low probability of TB. "
-                    "If patient is symptomatic, continue routine monitoring. "
-                    "Re-evaluate if symptoms worsen, persist, or new symptoms develop. "
-                    "Consider alternative diagnoses if appropriate."
-                )
+                return "Low probability of TB. If patient is symptomatic, continue routine monitoring."
             else:
-                return (
-                    "TB unlikely but follow-up recommended if symptomatic. "
-                    "Monitor patient closely and consider re-testing if concerns persist. "
-                    "Clinical judgment should guide next steps based on presentation. "
-                    "Rule out other respiratory conditions."
-                )
+                return "TB unlikely but follow-up recommended if symptomatic. Monitor patient closely."
 
     def _generate_disclaimer(self) -> str:
-        """
-        Generate standard disclaimer.
-
-        Returns:
-            Disclaimer text
-        """
-        return (
-            "This is an AI-assisted screening tool and NOT a diagnostic device. "
-            "Results should always be verified by qualified healthcare professionals. "
-            "Clinical diagnosis of TB requires confirmatory laboratory testing including "
-            "sputum microscopy, culture, or molecular tests (e.g., GeneXpert). "
-            "This tool is intended to support, not replace, clinical judgment."
-        )
-
-    def explain_prediction(
-        self, features: Dict[str, Union[int, float, str]], top_n: int = 5
-    ) -> Dict:
-        """
-        Provide detailed explanation for prediction.
-
-        Args:
-            features: Feature dictionary
-            top_n: Number of top features to show
-
-        Returns:
-            Dictionary with prediction explanation
-        """
-        # Get feature importance from ensemble
-        feature_importance = self.ensemble_model.get_feature_importance(
-            self.metadata["feature_columns"]
-        )
-
-        # Get top N features that are in input
-        top_features = []
-        for feature_name, importance in list(feature_importance.items())[:top_n]:
-            if feature_name in features:
-                top_features.append(
-                    {
-                        "feature": feature_name,
-                        "value": features[feature_name],
-                        "importance": importance,
-                    }
-                )
-
-        return {
-            "top_contributing_features": top_features,
-            "feature_importance_available": len(feature_importance) > 0,
-        }
+        return "This is an AI-assisted screening tool and NOT a diagnostic device. Results should always be verified by professionals."
 
     def get_feature_importance(
         self, top_n: int = 5
     ) -> List[Dict[str, Union[str, float]]]:
-        """
-        Get feature importance rankings from the ensemble model.
-
-        Args:
-            top_n: Number of top features to return
-
-        Returns:
-            List of dictionaries containing feature names and importance values
-        """
         try:
-            # Extract importance from the underlying ensemble
             full_importance = self.ensemble_model.get_feature_importance(
                 self.metadata["feature_columns"]
             )
-
-            # Sort and format for the API response schema
             sorted_features = sorted(
                 full_importance.items(), key=lambda x: x[1], reverse=True
             )[:top_n]
-
             return [
                 {"feature": name, "importance": float(val)}
                 for name, val in sorted_features
@@ -367,70 +236,19 @@ class TBPredictor:
             return []
 
     def get_model_info(self) -> Dict:
-        """
-        Get information about the prediction system.
-
-        Returns:
-            Dictionary with system information
-        """
         ensemble_info = self.ensemble_model.get_model_info()
-
         return {
             "model_version": "1.0.0",
             "ensemble_strategy": ensemble_info["strategy"],
             "base_models": ensemble_info["base_models"],
             "optimal_threshold": ensemble_info["optimal_threshold"],
-            # Use .get() with fallback to avoid KeyError
             "feature_count": self.metadata.get(
                 "n_features", len(self.metadata.get("feature_columns", []))
             ),
-            # Use .get() for safety
             "clinical_features": self.metadata.get("clinical_features", []),
             "performance": ensemble_info.get("performance", {}),
         }
 
-
-# Convenience function
-async def predict(
-    audio_input: Union[str, Path, bytes, io.BytesIO],
-    clinical_features: Dict[str, Union[int, float, str]],
-    generate_spectrogram: bool = True,
-) -> Dict:
-    """
-    Quick prediction function.
-
-    Args:
-        audio_input: Audio file path, bytes, or BytesIO
-        clinical_features: Dictionary of clinical features
-        generate_spectrogram: Whether to generate spectrogram
-
-    Returns:
-        Prediction result dictionary
-    """
-    predictor = TBPredictor()
-    return await predictor.predict_from_audio(
-        audio_input, clinical_features, generate_spectrogram
-    )
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    # Example usage
-    async def test_predictor():
-        predictor = TBPredictor()
-
-        # Get model info
-        info = predictor.get_model_info()
-
-        logger.info("\nTB Predictor Info:")
-        logger.info(f"  Model Version: {info['model_version']}")
-        logger.info(f"  Strategy: {info['ensemble_strategy']}")
-        logger.info(f"  Base Models: {info['base_models']}")
-        logger.info(f"  Threshold: {info['optimal_threshold']:.3f}")
-        logger.info("\nPredictor ready for inference")
-
-    asyncio.run(test_predictor())
 
 # """
 # High-level Predictor for TBFusionAI.

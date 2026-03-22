@@ -94,7 +94,7 @@ Thumbs.db
 dmypy.json
 
 # Static files (except necessary ones)
-frontend/static/uploads/
+# frontend/static/uploads/
 
 # Model cache
 model_cache/
@@ -104,3 +104,4 @@ cache/
 tmp/
 temp/
 *.tmp
+push_updates.sh
