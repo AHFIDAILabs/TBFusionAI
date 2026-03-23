@@ -1,5 +1,5 @@
 /* ============================================================================
-   TBFusionAI - Global Styles
+   TBFusionAI - Global Styles - UPDATED WITH BACKGROUND IMAGES
    ============================================================================ */
 
 /* CSS Variables */
@@ -277,14 +277,19 @@ section {
 }
 
 /* ============================================================================
-   Hero Section
+   Hero Section - UPDATED WITH BACKGROUND IMAGE
    ============================================================================ */
 
 .hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85)), 
+                url('../images/home_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: var(--white);
     padding: var(--spacing-2xl) 0;
     overflow: hidden;
+    min-height: 600px;
 }
 
 .hero-content {
@@ -295,7 +300,7 @@ section {
 }
 
 .hero-title {
-    font-size: 2.5rem; /* Reduced from 3.5rem */
+    font-size: 2.5rem;
     color: var(--white);
     margin-bottom: var(--spacing-md);
 }
@@ -340,24 +345,27 @@ section {
     color: rgba(255, 255, 255, 0.8);
 }
 
+/* UPDATED: Floating cards now use tb_02.png as background */
 .hero-image {
     position: relative;
-}
-
-.hero-image img {
-    width: 100%;
-    height: auto;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
+    background: url('../images/tb_02.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .floating-card {
     position: absolute;
-    background-color: var(--white);
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     color: var(--dark);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
@@ -606,34 +614,46 @@ section {
 }
 
 /* ============================================================================
-   Prediction Page
+   Prediction Page - UPDATED WITH BACKGROUND IMAGE
    ============================================================================ */
 
 .prediction-section {
-    background: linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
-                url('../images/prediction_image.png'); /* Note the '../' to reach images folder from css */
+    background: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), 
+                url('../images/prediction_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    min-height: calc(100vh - 200px);
+    min-height: calc(100vh - 80px);
+    padding: var(--spacing-xl) 0;
 }
 
 .prediction-container {
-    display: block; /* Changed from grid to allow the internal form-sections-container to work */
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-xl);
-    margin-top: var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .prediction-form-wrapper {
-    background-color: var(--white);
-    padding: var(--spacing-lg);
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    padding: var(--spacing-xl);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* UPDATED: Two-column layout for form sections */
+.form-sections-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
 }
 
 .form-section {
-    margin-bottom: var(--spacing-xl);
+    background-color: var(--lighter);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    height: fit-content;
 }
 
 .form-section-title {
@@ -643,7 +663,7 @@ section {
     color: var(--dark);
     margin-bottom: var(--spacing-md);
     padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--lighter);
+    border-bottom: 2px solid var(--white);
 }
 
 .form-section-title i {
@@ -651,6 +671,27 @@ section {
 }
 
 /* Audio Upload */
+.audio-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.divider {
+    text-align: center;
+    border-bottom: 1px solid var(--gray-lighter);
+    line-height: 0.1em;
+    margin: var(--spacing-md) 0;
+}
+
+.divider span {
+    background: var(--lighter);
+    padding: 0 15px;
+    color: var(--gray-light);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
 .audio-upload-area {
     border: 2px dashed var(--gray-lighter);
     border-radius: var(--border-radius-lg);
@@ -658,6 +699,7 @@ section {
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
+    background-color: var(--white);
 }
 
 .audio-upload-area:hover {
@@ -682,7 +724,7 @@ section {
 }
 
 .audio-preview {
-    background-color: var(--lighter);
+    background-color: var(--white);
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
 }
@@ -735,6 +777,7 @@ section {
     border-radius: var(--border-radius);
     font-size: 1rem;
     transition: var(--transition);
+    background-color: var(--white);
 }
 
 .form-group input:focus,
@@ -744,20 +787,17 @@ section {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Results Panel */
+/* UPDATED: Results layout - side by side */
 .results-panel {
-    background-color: var(--white);
-    padding: var(--spacing-lg);
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    padding: var(--spacing-xl);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 100px;
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
+    box-shadow: var(--shadow-xl);
 }
 
 .results-header {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
 }
 
 .results-title {
@@ -765,6 +805,20 @@ section {
     align-items: center;
     gap: var(--spacing-sm);
     color: var(--dark);
+    font-size: 1.75rem;
+}
+
+.results-content {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+/* UPDATED: Side-by-side layout for results and spectrogram */
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
 }
 
 .prediction-badge {
@@ -775,7 +829,6 @@ section {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
 }
 
 .badge-icon {
@@ -815,7 +868,6 @@ section {
     background-color: var(--lighter);
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
-    margin-bottom: var(--spacing-md);
 }
 
 .confidence-label {
@@ -852,7 +904,6 @@ section {
     background-color: var(--lighter);
     padding: var(--spacing-md);
     border-radius: var(--border-radius);
-    margin-bottom: var(--spacing-md);
 }
 
 .card-title {
@@ -924,14 +975,21 @@ section {
 }
 
 /* ============================================================================
-   FAQ Page
+   FAQ Page - UPDATED WITH BACKGROUND IMAGE
    ============================================================================ */
 
 .faq-hero {
-    background: var(--gradient-primary);
+    background: linear-gradient(rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9)), 
+                url('../images/faq_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: var(--white);
     text-align: center;
     padding: var(--spacing-xl) 0;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
 }
 
 .page-title {
@@ -972,12 +1030,14 @@ section {
     color: var(--primary-color);
 }
 
+/* UPDATED: FAQ Accordion with proper functionality */
 .faq-item {
     background-color: var(--white);
     border-radius: var(--border-radius);
     margin-bottom: var(--spacing-sm);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
 }
 
 .faq-question {
@@ -987,6 +1047,7 @@ section {
     padding: var(--spacing-md);
     cursor: pointer;
     transition: var(--transition);
+    user-select: none;
 }
 
 .faq-question:hover {
@@ -997,11 +1058,13 @@ section {
     color: var(--dark);
     font-size: 1.125rem;
     margin: 0;
+    flex: 1;
 }
 
 .faq-question i {
     color: var(--primary-color);
     transition: transform 0.3s ease;
+    font-size: 1.25rem;
 }
 
 .faq-item.active .faq-question i {
@@ -1011,32 +1074,38 @@ section {
 .faq-answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    background-color: var(--lighter);
 }
 
 .faq-item.active .faq-answer {
-    max-height: 1000px;
+    max-height: 2000px;
+    padding: var(--spacing-md);
 }
 
-.faq-answer p,
-.faq-answer ul,
-.faq-answer ol {
-    padding: 0 var(--spacing-md) var(--spacing-md);
+.faq-answer p {
     color: var(--gray);
+    margin-bottom: var(--spacing-sm);
 }
 
 .faq-answer ul,
 .faq-answer ol {
-    padding-left: var(--spacing-xl);
+    margin: var(--spacing-sm) 0;
+    padding-left: var(--spacing-lg);
 }
 
 .faq-answer li {
     margin-bottom: var(--spacing-xs);
+    color: var(--gray);
 }
 
 .faq-answer a {
     color: var(--primary-color);
     text-decoration: underline;
+}
+
+.faq-answer a:hover {
+    color: var(--primary-dark);
 }
 
 .faq-cta {
@@ -1063,8 +1132,19 @@ section {
    ============================================================================ */
 
 @media (max-width: 1024px) {
-    .hero-content,
-    .prediction-container {
+    .hero-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-image {
+        min-height: 400px;
+    }
+    
+    .form-sections-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .results-grid {
         grid-template-columns: 1fr;
     }
     
@@ -1077,11 +1157,6 @@ section {
         height: 50px;
         margin: var(--spacing-sm) 0;
     }
-    
-    .results-panel {
-        position: static;
-        max-height: none;
-    }
 }
 
 @media (max-width: 768px) {
@@ -1090,7 +1165,11 @@ section {
     h3 { font-size: 1.5rem; }
     
     .hero-title {
-        font-size: 1.8rem; /* Reduced from 2.5rem to maintain hierarchy */
+        font-size: 1.8rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
     }
     
     .nav-menu {
@@ -1133,6 +1212,10 @@ section {
         flex-direction: column;
         gap: var(--spacing-xs);
     }
+    
+    .results-actions {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1141,55 +1224,23 @@ section {
     }
     
     section {
-        padding:var(--spacing-lg) 0;
-}
-.btn {
-    width: 100%;
-    justify-content: center;
-}
-
-.results-actions {
-    flex-direction: column;
-}
-}
-
-/* --- New Prediction Layout Styles --- */
-.form-sections-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: var(--spacing-lg);
-}
-
-.audio-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.divider {
-    text-align: center;
-    border-bottom: 1px solid var(--gray-lighter);
-    line-height: 0.1em;
-    margin: 30px 0;
-}
-
-.divider span {
-    background: #fff;
-    padding: 0 15px;
-    color: var(--gray-light);
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
-/* Ensure form sections stack on tablets/mobile */
-@media (max-width: 992px) {
-    .form-sections-container {
-        grid-template-columns: 1fr;
+        padding: var(--spacing-lg) 0;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .hero-image {
+        min-height: 300px;
     }
 }
+
 /* ============================================================================
-Utility Classes
-============================================================================ */
+   Utility Classes
+   ============================================================================ */
+
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
@@ -1201,68 +1252,3 @@ Utility Classes
 .mb-lg { margin-bottom: var(--spacing-lg); }
 .hidden { display: none !important; }
 .visible { display: block !important; }
-
-/* FAQ Accordion Styles */
-.faq-item {
-    margin-bottom: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.faq-question {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    cursor: pointer;
-    background: white;
-    transition: background 0.3s ease;
-}
-
-.faq-question:hover {
-    background: #f9fafb;
-}
-
-.faq-question h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #1f2937;
-}
-
-.faq-question i {
-    transition: transform 0.3s ease;
-    color: #6b7280;
-}
-
-.faq-answer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-    padding: 0 1.5rem;
-    background: #f9fafb;
-}
-
-.faq-item.active .faq-answer {
-    max-height: 1000px;
-    padding: 1.5rem;
-}
-
-.faq-item.active .faq-question i {
-    transform: rotate(180deg);
-}
-
-.faq-answer p {
-    margin: 0 0 1rem 0;
-}
-
-.faq-answer ul,
-.faq-answer ol {
-    margin: 0.5rem 0;
-    padding-left: 1.5rem;
-}
-
-.faq-answer li {
-    margin-bottom: 0.5rem;
-}

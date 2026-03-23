@@ -174,7 +174,6 @@
             </div>
         </div>
     </section>
-
                 <!-- Results Panel -->
                 <div class="results-panel" id="resultsPanel" style="display: none;">
                     <div class="results-header">
@@ -184,33 +183,39 @@
                     </div>
 
                     <div class="results-content">
-                        <!-- Prediction Badge -->
-                        <div class="prediction-badge" id="predictionBadge">
-                            <div class="badge-icon" id="badgeIcon">
-                                <i class="fas fa-circle-notch fa-spin"></i>
+                        <!-- UPDATED: Side-by-side grid for prediction and spectrogram -->
+                        <div class="results-grid">
+                            <!-- Left Column: Prediction and Confidence -->
+                            <div>
+                                <!-- Prediction Badge -->
+                                <div class="prediction-badge" id="predictionBadge">
+                                    <div class="badge-icon" id="badgeIcon">
+                                        <i class="fas fa-circle-notch fa-spin"></i>
+                                    </div>
+                                    <div class="badge-text">
+                                        <h4 id="predictionText">Analyzing...</h4>
+                                        <p id="probabilityText"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Confidence Level -->
+                                <div class="confidence-card" style="margin-top: var(--spacing-md);">
+                                    <div class="confidence-label">Confidence Level</div>
+                                    <div class="confidence-value" id="confidenceValue">-</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" id="confidenceFill"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="badge-text">
-                                <h4 id="predictionText">Analyzing...</h4>
-                                <p id="probabilityText"></p>
+
+                            <!-- Right Column: Spectrogram -->
+                            <div class="spectrogram-card" id="spectrogramCard" style="display: none;">
+                                <h4 class="card-title">Audio Spectrogram</h4>
+                                <img id="spectrogramImage" src="" alt="Audio Spectrogram">
                             </div>
                         </div>
 
-                        <!-- Confidence Level -->
-                        <div class="confidence-card">
-                            <div class="confidence-label">Confidence Level</div>
-                            <div class="confidence-value" id="confidenceValue">-</div>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" id="confidenceFill"></div>
-                            </div>
-                        </div>
-
-                        <!-- Spectrogram -->
-                        <div class="spectrogram-card" id="spectrogramCard" style="display: none;">
-                            <h4 class="card-title">Audio Spectrogram</h4>
-                            <img id="spectrogramImage" src="" alt="Audio Spectrogram">
-                        </div>
-
-                        <!-- Recommendation -->
+                        <!-- Recommendation (full width below) -->
                         <div class="recommendation-card">
                             <h4 class="card-title">
                                 <i class="fas fa-clipboard-list"></i> Clinical Recommendation
@@ -240,8 +245,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
     </section>
 
     <!-- Loading Overlay -->
