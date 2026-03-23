@@ -282,7 +282,7 @@ section {
 
 .hero {
     background: linear-gradient(rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85)), 
-                url('../images/home_image.png');
+                url('/static/images/home_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -348,7 +348,7 @@ section {
 /* UPDATED: Floating cards now use tb_02.png as background */
 .hero-image {
     position: relative;
-    background: url('../images/tb_02.png');
+    background: url('/static/images/tb_02.png');
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -619,7 +619,7 @@ section {
 
 .prediction-section {
     background: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), 
-                url('../images/prediction_image.png');
+                url('/static/images/prediction_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -980,7 +980,7 @@ section {
 
 .faq-hero {
     background: linear-gradient(rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9)), 
-                url('../images/faq_image.png');
+                url('/static/images/faq_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;

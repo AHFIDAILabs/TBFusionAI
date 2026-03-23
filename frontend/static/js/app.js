@@ -305,6 +305,36 @@ function initApp() {
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+/**
+ * Initialize FAQ accordion functionality
+ */
+function initFAQ() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        question.addEventListener('click', () => {
+            // Toggle current item
+            const isActive = item.classList.contains('active');
+            
+            // Optional: Close other items (comment out if you want multiple open)
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            
+            // Toggle clicked item
+            if (isActive) {
+                item.classList.remove('active');
+            } else {
+                item.classList.add('active');
+            }
+        });
+    });
+}
+
 // /**
 //  * TBFusionAI - Main JavaScript Application
 //  * Handles all frontend interactions and API calls
