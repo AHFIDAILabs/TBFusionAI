@@ -26,7 +26,10 @@ FROM python:3.10-slim-bookworm AS runtime
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/home/appuser/.local/bin:${PATH}"
+    PATH="/home/appuser/.local/bin:${PATH}" \
+    HF_HOME=/app/.cache/huggingface \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface \
+    HF_HUB_CACHE=/app/.cache/huggingface/hub
 
 # Install runtime-only system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,37 +38,123 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 1. Create application user and directory structure
+# Create application user and directory structure
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/artifacts/trained_models /app/artifacts/logs /app/artifacts/reports && \
+    mkdir -p /app/artifacts/trained_models \
+             /app/artifacts/logs \
+             /app/artifacts/reports \
+             /app/.cache/huggingface && \
     chown -R appuser:appuser /app
 
 WORKDIR /app
 
-# 2. Copy the installed python packages from the builder stage
+# Copy the installed python packages from the builder stage
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-# 3. Explicitly copy model artifacts (Fail fast if missing)
-# This confirms /app/artifacts/trained_models/cost_sensitive_ensemble_model.joblib is included
+# CRITICAL: Download Wav2Vec2 model BEFORE switching to appuser
+# This caches the model in the image to avoid rate limits
+RUN python -c "from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC; \
+    Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h'); \
+    Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-base-960h')" && \
+    chown -R appuser:appuser /app/.cache
+
+# Copy model artifacts (Fail fast if missing)
 COPY --chown=appuser:appuser artifacts/ /app/artifacts/
 
-# 4. Copy the rest of the application code
+# Copy the rest of the application code
 COPY --chown=appuser:appuser . .
 
-# Final permission check for the appuser
-RUN chown -R appuser:appuser /app/artifacts
+# Final permission check
+RUN chown -R appuser:appuser /app
 
+# Switch to non-root user
 USER appuser
 
 # Cloud Run uses dynamic ports, but usually defaults to 8080
 EXPOSE 8080
 
-# Healthcheck adjusted for the dynamic $PORT environment variable
+# Healthcheck for Cloud Run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8080}/api/v1/health || exit 1
 
-# Start the application using the shell form to expand the $PORT variable
+# Start the application
 CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
+
+
+
+# # ============================================================================
+# # Stage 1: Builder (Compiles requirements)
+# # ============================================================================
+# FROM python:3.10-slim-bookworm AS builder
+
+# WORKDIR /app
+
+# # Install build dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential \
+#     curl \
+#     git \
+#     && rm -rf /var/lib/apt/lists/*
+
+# COPY requirements.txt .
+
+# # Install dependencies to a local user directory
+# RUN pip install --upgrade pip && \
+#     pip install --user --no-cache-dir -r requirements.txt
+
+# # ============================================================================
+# # Stage 2: Runtime (The final production image)
+# # ============================================================================
+# FROM python:3.10-slim-bookworm AS runtime
+
+# # Set environment variables
+# ENV PYTHONUNBUFFERED=1 \
+#     PYTHONDONTWRITEBYTECODE=1 \
+#     PATH="/home/appuser/.local/bin:${PATH}"
+
+# # Install runtime-only system dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     libsndfile1 \
+#     ffmpeg \
+#     curl \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # 1. Create application user and directory structure
+# RUN useradd -m -u 1000 appuser && \
+#     mkdir -p /app/artifacts/trained_models /app/artifacts/logs /app/artifacts/reports \
+#     chown -R appuser:appuser /app && \
+#     python -c from transformers import Wav2Vec2Processor; Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h')
+
+# WORKDIR /app
+
+# # 2. Copy the installed python packages from the builder stage
+# COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+
+# # 3. Explicitly copy model artifacts (Fail fast if missing)
+# # This confirms /app/artifacts/trained_models/cost_sensitive_ensemble_model.joblib is included
+# COPY --chown=appuser:appuser artifacts/ /app/artifacts/
+
+# # 4. Copy the rest of the application code
+# COPY --chown=appuser:appuser . .
+
+# # Final permission check for the appuser
+# RUN chown -R appuser:appuser /app/artifacts
+
+# USER appuser
+
+# # Cloud Run uses dynamic ports, but usually defaults to 8080
+# EXPOSE 8080
+
+# # Healthcheck adjusted for the dynamic $PORT environment variable
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#     CMD curl -f http://localhost:${PORT:-8080}/api/v1/health || exit 1
+
+# # Add before CMD
+# ENV HF_HOME=/app/.cache/huggingface
+# ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+
+# # Start the application using the shell form to expand the $PORT variable
+# CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
 
 
 # # ============================================================================
