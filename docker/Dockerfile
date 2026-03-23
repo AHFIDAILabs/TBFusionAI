@@ -14,9 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-# Install dependencies to a local user directory
+# Install dependencies globally (simpler for multi-stage)
 RUN pip install --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
+
+# Download Wav2Vec2 model in builder stage (where transformers is installed)
+RUN python -c "from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC; \
+    Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h'); \
+    Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-base-960h')"
 
 # ============================================================================
 # Stage 2: Runtime (The final production image)
@@ -26,7 +31,6 @@ FROM python:3.10-slim-bookworm AS runtime
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/home/appuser/.local/bin:${PATH}" \
     HF_HOME=/app/.cache/huggingface \
     TRANSFORMERS_CACHE=/app/.cache/huggingface \
     HF_HUB_CACHE=/app/.cache/huggingface/hub
@@ -38,24 +42,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy Python packages from builder (globally installed)
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy cached HuggingFace models from builder
+COPY --from=builder /root/.cache/huggingface /app/.cache/huggingface
+
 # Create application user and directory structure
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/artifacts/trained_models \
              /app/artifacts/logs \
-             /app/artifacts/reports \
-             /app/.cache/huggingface && \
+             /app/artifacts/reports && \
     chown -R appuser:appuser /app
 
 WORKDIR /app
-
-# CRITICAL: Copy Python packages FIRST (before trying to use them)
-COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
-
-# NOW download Wav2Vec2 model (transformers is available now)
-RUN python -c "from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC; \
-    Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h'); \
-    Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-base-960h')" && \
-    chown -R appuser:appuser /app/.cache
 
 # Copy model artifacts (Fail fast if missing)
 COPY --chown=appuser:appuser artifacts/ /app/artifacts/
@@ -78,6 +79,87 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Start the application
 CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
+
+# # ============================================================================
+# # Stage 1: Builder (Compiles requirements)
+# # ============================================================================
+# FROM python:3.10-slim-bookworm AS builder
+
+# WORKDIR /app
+
+# # Install build dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential \
+#     curl \
+#     git \
+#     && rm -rf /var/lib/apt/lists/*
+
+# COPY requirements.txt .
+
+# # Install dependencies to a local user directory
+# RUN pip install --upgrade pip && \
+#     pip install --user --no-cache-dir -r requirements.txt
+
+# # ============================================================================
+# # Stage 2: Runtime (The final production image)
+# # ============================================================================
+# FROM python:3.10-slim-bookworm AS runtime
+
+# # Set environment variables
+# ENV PYTHONUNBUFFERED=1 \
+#     PYTHONDONTWRITEBYTECODE=1 \
+#     PATH="/home/appuser/.local/bin:${PATH}" \
+#     HF_HOME=/app/.cache/huggingface \
+#     TRANSFORMERS_CACHE=/app/.cache/huggingface \
+#     HF_HUB_CACHE=/app/.cache/huggingface/hub
+
+# # Install runtime-only system dependencies
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     libsndfile1 \
+#     ffmpeg \
+#     curl \
+#     && rm -rf /var/lib/apt/lists/*
+
+# # Create application user and directory structure
+# RUN useradd -m -u 1000 appuser && \
+#     mkdir -p /app/artifacts/trained_models \
+#              /app/artifacts/logs \
+#              /app/artifacts/reports \
+#              /app/.cache/huggingface && \
+#     chown -R appuser:appuser /app
+
+# WORKDIR /app
+
+# # CRITICAL: Copy Python packages FIRST (before trying to use them)
+# COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+
+# # NOW download Wav2Vec2 model (transformers is available now)
+# RUN python -c "from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC; \
+#     Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h'); \
+#     Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-base-960h')" && \
+#     chown -R appuser:appuser /app/.cache
+
+# # Copy model artifacts (Fail fast if missing)
+# COPY --chown=appuser:appuser artifacts/ /app/artifacts/
+
+# # Copy the rest of the application code
+# COPY --chown=appuser:appuser . .
+
+# # Final permission check
+# RUN chown -R appuser:appuser /app
+
+# # Switch to non-root user
+# USER appuser
+
+# # Cloud Run uses dynamic ports, but usually defaults to 8080
+# EXPOSE 8080
+
+# # Healthcheck for Cloud Run
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+#     CMD curl -f http://localhost:${PORT:-8080}/api/v1/health || exit 1
+
+# # Start the application
+# CMD sh -c "python main.py serve 0.0.0.0 ${PORT:-8080}"
 
 
 
