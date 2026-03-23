@@ -48,11 +48,10 @@ RUN useradd -m -u 1000 appuser && \
 
 WORKDIR /app
 
-# Copy the installed python packages from the builder stage
+# CRITICAL: Copy Python packages FIRST (before trying to use them)
 COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
 
-# CRITICAL: Download Wav2Vec2 model BEFORE switching to appuser
-# This caches the model in the image to avoid rate limits
+# NOW download Wav2Vec2 model (transformers is available now)
 RUN python -c "from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC; \
     Wav2Vec2Processor.from_pretrained('facebook/wav2vec2-base-960h'); \
     Wav2Vec2ForCTC.from_pretrained('facebook/wav2vec2-base-960h')" && \
