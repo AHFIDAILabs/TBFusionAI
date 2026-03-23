@@ -104,4 +104,4 @@ cache/
 tmp/
 temp/
 *.tmp
-push_updates.sh
+push_updates.sh!frontend/static/images/*.png
