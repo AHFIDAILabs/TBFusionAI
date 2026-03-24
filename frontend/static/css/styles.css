@@ -1252,3 +1252,176 @@ section {
 .mb-lg { margin-bottom: var(--spacing-lg); }
 .hidden { display: none !important; }
 .visible { display: block !important; }
+
+/* ==========================================================================
+   CRITICAL FIXES FOR BACKGROUNDS
+   ========================================================================== */
+
+/* 1. HOME PAGE - Full page background */
+.hero {
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
+        url('/static/images/home_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    position: relative;
+}
+
+/* 2. TB_02.PNG - Reduce to 1/10 size (10% width) */
+.hero-image {
+    width: 10%; /* Changed from 100% to 10% */
+    max-width: 150px; /* Limit maximum size */
+    height: auto;
+    background: url('/static/images/tb_02.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Floating cards container - no background needed */
+.floating-cards {
+    background: transparent; /* Remove tb_02 from here */
+    padding: 60px 0;
+}
+
+/* Individual cards styling */
+.feature-card,
+.model-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover,
+.model-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 3. PREDICTION PAGE - Full page background */
+.prediction-section {
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
+        url('/static/images/prediction_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    padding: 80px 0;
+}
+
+/* Prediction form container */
+.prediction-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 4. FAQ PAGE - Full page background */
+.faq-section {
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
+        url('/static/images/faq_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    padding: 80px 0;
+}
+
+/* FAQ container */
+.faq-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* FAQ Accordion Styling */
+.faq-item {
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.faq-question {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: background 0.3s ease;
+    user-select: none;
+}
+
+.faq-question:hover {
+    background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%);
+}
+
+.faq-question i {
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 25px;
+    background: white;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 2000px;
+    padding: 25px;
+}
+
+.faq-answer p {
+    margin: 0;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Ensure text is readable on backgrounds */
+.hero h1,
+.hero h2,
+.hero p,
+.prediction-section h1,
+.prediction-section h2,
+.faq-section h1,
+.faq-section h2 {
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}

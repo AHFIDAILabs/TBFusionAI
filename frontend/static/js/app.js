@@ -305,40 +305,92 @@ function initApp() {
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+
+// ============ FAQ ACCORDION FIX ============
 /**
- * Initialize FAQ accordion functionality
+ * FAQ Accordion Initialization
+ * CRITICAL: This must be called when the FAQ page loads
  */
 function initFAQ() {
-    console.log('🔧 Initializing FAQ accordion...');
+    console.log('🔧 Starting FAQ accordion initialization...');
     
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFAQAccordion);
+    } else {
+        initFAQAccordion();
+    }
+}
+
+function initFAQAccordion() {
     const faqItems = document.querySelectorAll('.faq-item');
-    console.log(`Found ${faqItems.length} FAQ items`);
+    
+    console.log(`✓ Found ${faqItems.length} FAQ items`);
+    
+    if (faqItems.length === 0) {
+        console.warn('⚠️ No FAQ items found! Check HTML structure.');
+        return;
+    }
     
     faqItems.forEach((item, index) => {
         const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
         
-        if (question) {
-            question.addEventListener('click', function(e) {
-                console.log(`Clicked FAQ item ${index}`);
-                
-                // Close all other items
-                faqItems.forEach(otherItem => {
-                    if (otherItem !== item) {
-                        otherItem.classList.remove('active');
-                    }
-                });
-                
-                // Toggle current item
-                item.classList.toggle('active');
-            });
+        if (!question) {
+            console.error(`❌ FAQ item ${index} missing .faq-question`);
+            return;
         }
+        
+        if (!answer) {
+            console.error(`❌ FAQ item ${index} missing .faq-answer`);
+            return;
+        }
+        
+        // Remove any existing listeners
+        question.replaceWith(question.cloneNode(true));
+        const newQuestion = item.querySelector('.faq-question');
+        
+        newQuestion.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`📌 Clicked FAQ item ${index + 1}`);
+            
+            const isCurrentlyActive = item.classList.contains('active');
+            
+            // Close all other items
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            
+            // Toggle current item
+            if (isCurrentlyActive) {
+                item.classList.remove('active');
+                console.log(`➖ Closed FAQ item ${index + 1}`);
+            } else {
+                item.classList.add('active');
+                console.log(`➕ Opened FAQ item ${index + 1}`);
+            }
+        });
+        
+        console.log(`✓ Initialized FAQ item ${index + 1}`);
     });
     
-    console.log('✓ FAQ accordion initialized');
+    console.log('✅ FAQ accordion fully initialized!');
 }
 
-// Make it globally available
-window.initFAQ = initFAQ;
+// Auto-initialize on page load
+if (typeof window !== 'undefined') {
+    window.initFAQ = initFAQ;
+    
+    // If we're on the FAQ page, initialize immediately
+    if (window.location.pathname.includes('faq')) {
+        console.log('📄 FAQ page detected, auto-initializing...');
+        initFAQ();
+    }
+}
 
 // /**
 //  * Initialize FAQ accordion functionality
