@@ -1,7 +1,13 @@
 /**
  * TBFusionAI - Main JavaScript Application
- * Handles all frontend interactions and API calls
- * Version: 2.0 - Fixed recording, FAQ accordion, error handling
+ * Version: 3.0 - Complete Fix for Recording and Upload Issues
+ * 
+ * FIXES:
+ * 1. WebM recording support
+ * 2. Proper File object creation
+ * 3. Fixed double-click upload issue
+ * 4. FAQ accordion working
+ * 5. Better error messages
  */
 
 // ============================================================================
@@ -68,6 +74,9 @@ function validateAudioFile(file) {
     if (file.size > maxSize) {
         return { valid: false, error: 'File size exceeds 10MB limit.' };
     }
+    if (file.size === 0) {
+        return { valid: false, error: 'File is empty.' };
+    }
     return { valid: true };
 }
 
@@ -88,13 +97,16 @@ function initPredictionPage() {
     const newPredictionBtn = document.getElementById('newPredictionBtn');
     const printResultsBtn = document.getElementById('printResultsBtn');
 
+    // Recording buttons
     if (startRecordBtn && stopRecordBtn) {
         startRecordBtn.addEventListener('click', startRecording);
         stopRecordBtn.addEventListener('click', stopRecording);
     }
     
+    // Upload area click
     uploadArea.addEventListener('click', () => audioFileInput.click());
     
+    // Drag and drop
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadArea.style.borderColor = 'var(--primary-color)';
@@ -113,10 +125,10 @@ function initPredictionPage() {
         if (files.length > 0) handleAudioFileSelect(files[0]);
     });
     
-    audioFileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) handleAudioFileSelect(e.target.files[0]);
-    });
+    // CRITICAL FIX: Use 'change' event only ONCE
+    audioFileInput.addEventListener('change', handleFileInputChange, { once: false });
     
+    // Remove audio button
     if (removeAudioBtn) {
         removeAudioBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -124,17 +136,31 @@ function initPredictionPage() {
         });
     }
     
+    // Form submission
     predictionForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await handlePredictionSubmit();
     });
     
+    // New prediction button
     if (newPredictionBtn) {
         newPredictionBtn.addEventListener('click', resetPredictionForm);
     }
     
+    // Print button
     if (printResultsBtn) {
         printResultsBtn.addEventListener('click', () => window.print());
+    }
+}
+
+// ============================================================================
+// File Input Handler - FIXED
+// ============================================================================
+
+function handleFileInputChange(e) {
+    // CRITICAL FIX: Handle the file selection properly
+    if (e.target.files && e.target.files.length > 0) {
+        handleAudioFileSelect(e.target.files[0]);
     }
 }
 
@@ -149,16 +175,20 @@ async function startRecording() {
                 channelCount: 1,
                 sampleRate: 16000,
                 echoCancellation: true,
-                noiseSuppression: true
+                noiseSuppression: true,
+                autoGainControl: true
             }
         });
         
-        // Determine best audio format
-        const options = MediaRecorder.isTypeSupported('audio/wav') 
-            ? { mimeType: 'audio/wav' }
-            : MediaRecorder.isTypeSupported('audio/webm') 
-            ? { mimeType: 'audio/webm' }
-            : {};
+        // Try WAV first, fallback to WebM
+        let options = {};
+        if (MediaRecorder.isTypeSupported('audio/wav')) {
+            options = { mimeType: 'audio/wav' };
+        } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm;codecs=opus' };
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+        }
         
         mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
@@ -169,7 +199,7 @@ async function startRecording() {
             }
         };
 
-        // Store stream reference for cleanup
+        // Store stream for cleanup
         mediaRecorder.stream = stream;
 
         mediaRecorder.start();
@@ -181,7 +211,7 @@ async function startRecording() {
         showNotification('Recording... cough clearly into the microphone', 'info');
         
     } catch (err) {
-        console.error('Microphone access error:', err);
+        console.error('❌ Microphone access error:', err);
         showNotification('Microphone access denied. Please allow microphone access.', 'error');
     }
 }
@@ -190,18 +220,18 @@ function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
         
-        // CRITICAL FIX: Define onstop handler HERE, not in startRecording
+        // CRITICAL FIX: Define onstop HERE, not in startRecording
         mediaRecorder.onstop = async () => {
             try {
-                // Determine actual format
-                const mimeType = mediaRecorder.mimeType || 'audio/wav';
+                // Determine format
+                const mimeType = mediaRecorder.mimeType || 'audio/webm';
                 const extension = mimeType.includes('webm') ? 'webm' : 'wav';
                 
-                // Create proper Blob
+                // Create Blob
                 const audioBlob = new Blob(audioChunks, { type: mimeType });
                 
-                // CRITICAL: Create proper File object with all required properties
-                const timestamp = new Date().getTime();
+                // CRITICAL: Create proper File object
+                const timestamp = Date.now();
                 const file = new File(
                     [audioBlob], 
                     `recorded_cough_${timestamp}.${extension}`,
@@ -215,13 +245,13 @@ function stopRecording() {
                     name: file.name,
                     size: file.size,
                     type: file.type,
-                    lastModified: new Date(file.lastModified).toISOString()
+                    extension: extension
                 });
                 
-                // Handle the file
+                // Handle file
                 handleAudioFileSelect(file);
                 
-                // Clean up: Stop all media tracks
+                // Cleanup media tracks
                 if (mediaRecorder.stream) {
                     mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 }
@@ -229,7 +259,7 @@ function stopRecording() {
                 showNotification('Recording saved successfully!', 'success');
                 
             } catch (error) {
-                console.error('Error processing recording:', error);
+                console.error('❌ Error processing recording:', error);
                 showNotification('Failed to process recording. Please try again.', 'error');
             }
         };
@@ -256,15 +286,32 @@ function handleAudioFileSelect(file) {
     document.getElementById('audioUploadArea').style.display = 'none';
     document.getElementById('audioPreview').style.display = 'block';
     document.getElementById('audioFileName').textContent = `${file.name} (${formatFileSize(file.size)})`;
-    document.getElementById('audioPlayer').src = URL.createObjectURL(file);
+    
+    // Create preview
+    const audioPlayer = document.getElementById('audioPlayer');
+    const url = URL.createObjectURL(file);
+    audioPlayer.src = url;
+    
+    // Clear the file input to allow re-selection of the same file
+    const audioFileInput = document.getElementById('audioFile');
+    if (audioFileInput) {
+        audioFileInput.value = '';
+    }
 }
 
 function removeAudioFile() {
     currentAudioFile = null;
+    
+    // Revoke object URL to free memory
+    const audioPlayer = document.getElementById('audioPlayer');
+    if (audioPlayer.src) {
+        URL.revokeObjectURL(audioPlayer.src);
+        audioPlayer.src = '';
+    }
+    
     document.getElementById('audioUploadArea').style.display = 'block';
     document.getElementById('audioPreview').style.display = 'none';
     document.getElementById('audioFile').value = '';
-    document.getElementById('audioPlayer').src = '';
     
     // Reset recording buttons
     document.getElementById('startRecordBtn').classList.remove('hidden');
@@ -272,7 +319,7 @@ function removeAudioFile() {
 }
 
 // ============================================================================
-// Prediction Submission
+// Prediction Submission - FIXED
 // ============================================================================
 
 async function handlePredictionSubmit() {
@@ -296,7 +343,7 @@ async function handlePredictionSubmit() {
         formData.delete('audio_file');
         formData.append('audio_file', currentAudioFile, currentAudioFile.name);
 
-        console.log('📤 Submitting prediction with:', {
+        console.log('📤 Submitting prediction:', {
             audioFile: currentAudioFile.name,
             audioSize: formatFileSize(currentAudioFile.size),
             audioType: currentAudioFile.type
@@ -511,6 +558,522 @@ window.TBFusionAI = {
     checkAPIHealth,
     initFAQ
 };
+
+
+
+// /**
+//  * TBFusionAI - Main JavaScript Application
+//  * Handles all frontend interactions and API calls
+//  * Version: 2.0 - Fixed recording, FAQ accordion, error handling
+//  */
+
+// // ============================================================================
+// // Global Variables
+// // ============================================================================
+
+// let currentAudioFile = null;
+// let predictionResult = null;
+// let mediaRecorder = null;
+// let audioChunks = [];
+
+// // API Base URL
+// const API_BASE_URL = window.location.origin + '/api/v1';
+
+// // ============================================================================
+// // Utility Functions
+// // ============================================================================
+
+// function showLoading() {
+//     const overlay = document.getElementById('loadingOverlay');
+//     if (overlay) overlay.style.display = 'flex';
+// }
+
+// function hideLoading() {
+//     const overlay = document.getElementById('loadingOverlay');
+//     if (overlay) overlay.style.display = 'none';
+// }
+
+// function showNotification(message, type = 'info') {
+//     const notification = document.createElement('div');
+//     notification.className = `notification notification-${type}`;
+//     notification.innerHTML = `
+//         <div class="notification-content">
+//             <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+//             <span>${message}</span>
+//         </div>
+//     `;
+//     document.body.appendChild(notification);
+//     setTimeout(() => notification.classList.add('show'), 100);
+//     setTimeout(() => {
+//         notification.classList.remove('show');
+//         setTimeout(() => notification.remove(), 300);
+//     }, 5000);
+// }
+
+// function formatFileSize(bytes) {
+//     if (bytes === 0) return '0 Bytes';
+//     const k = 1024;
+//     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+//     const i = Math.floor(Math.log(bytes) / Math.log(k));
+//     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+// }
+
+// function validateAudioFile(file) {
+//     const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/webm'];
+//     const maxSize = 10 * 1024 * 1024; // 10MB
+    
+//     if (!validTypes.includes(file.type) && !file.name.match(/\.(wav|mp3|ogg|webm)$/i)) {
+//         return {
+//             valid: false,
+//             error: 'Invalid file type. Please upload a WAV, MP3, OGG, or WebM file.'
+//         };
+//     }
+//     if (file.size > maxSize) {
+//         return { valid: false, error: 'File size exceeds 10MB limit.' };
+//     }
+//     return { valid: true };
+// }
+
+// // ============================================================================
+// // Prediction Page Functions
+// // ============================================================================
+
+// function initPredictionPage() {
+//     const uploadArea = document.getElementById('audioUploadArea');
+//     const audioFileInput = document.getElementById('audioFile');
+//     const predictionForm = document.getElementById('predictionForm');
+    
+//     if (!uploadArea || !audioFileInput || !predictionForm) return;
+
+//     const startRecordBtn = document.getElementById('startRecordBtn');
+//     const stopRecordBtn = document.getElementById('stopRecordBtn');
+//     const removeAudioBtn = document.getElementById('removeAudio');
+//     const newPredictionBtn = document.getElementById('newPredictionBtn');
+//     const printResultsBtn = document.getElementById('printResultsBtn');
+
+//     if (startRecordBtn && stopRecordBtn) {
+//         startRecordBtn.addEventListener('click', startRecording);
+//         stopRecordBtn.addEventListener('click', stopRecording);
+//     }
+    
+//     uploadArea.addEventListener('click', () => audioFileInput.click());
+    
+//     uploadArea.addEventListener('dragover', (e) => {
+//         e.preventDefault();
+//         uploadArea.style.borderColor = 'var(--primary-color)';
+//         uploadArea.style.backgroundColor = 'var(--lighter)';
+//     });
+    
+//     uploadArea.addEventListener('dragleave', () => {
+//         uploadArea.style.borderColor = 'var(--gray-lighter)';
+//         uploadArea.style.backgroundColor = 'transparent';
+//     });
+    
+//     uploadArea.addEventListener('drop', (e) => {
+//         e.preventDefault();
+//         uploadArea.style.borderColor = 'var(--gray-lighter)';
+//         const files = e.dataTransfer.files;
+//         if (files.length > 0) handleAudioFileSelect(files[0]);
+//     });
+    
+//     audioFileInput.addEventListener('change', (e) => {
+//         if (e.target.files.length > 0) handleAudioFileSelect(e.target.files[0]);
+//     });
+    
+//     if (removeAudioBtn) {
+//         removeAudioBtn.addEventListener('click', (e) => {
+//             e.preventDefault();
+//             removeAudioFile();
+//         });
+//     }
+    
+//     predictionForm.addEventListener('submit', async (e) => {
+//         e.preventDefault();
+//         await handlePredictionSubmit();
+//     });
+    
+//     if (newPredictionBtn) {
+//         newPredictionBtn.addEventListener('click', resetPredictionForm);
+//     }
+    
+//     if (printResultsBtn) {
+//         printResultsBtn.addEventListener('click', () => window.print());
+//     }
+// }
+
+// // ============================================================================
+// // Audio Recording Functions - FIXED
+// // ============================================================================
+
+// async function startRecording() {
+//     try {
+//         const stream = await navigator.mediaDevices.getUserMedia({ 
+//             audio: {
+//                 channelCount: 1,
+//                 sampleRate: 16000,
+//                 echoCancellation: true,
+//                 noiseSuppression: true
+//             }
+//         });
+        
+//         // Determine best audio format
+//         const options = MediaRecorder.isTypeSupported('audio/wav') 
+//             ? { mimeType: 'audio/wav' }
+//             : MediaRecorder.isTypeSupported('audio/webm') 
+//             ? { mimeType: 'audio/webm' }
+//             : {};
+        
+//         mediaRecorder = new MediaRecorder(stream, options);
+//         audioChunks = [];
+
+//         mediaRecorder.ondataavailable = (event) => {
+//             if (event.data.size > 0) {
+//                 audioChunks.push(event.data);
+//             }
+//         };
+
+//         // Store stream reference for cleanup
+//         mediaRecorder.stream = stream;
+
+//         mediaRecorder.start();
+//         console.log('✓ Recording started with format:', mediaRecorder.mimeType);
+        
+//         document.getElementById('startRecordBtn').classList.add('hidden');
+//         document.getElementById('stopRecordBtn').classList.remove('hidden');
+        
+//         showNotification('Recording... cough clearly into the microphone', 'info');
+        
+//     } catch (err) {
+//         console.error('Microphone access error:', err);
+//         showNotification('Microphone access denied. Please allow microphone access.', 'error');
+//     }
+// }
+
+// function stopRecording() {
+//     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+//         mediaRecorder.stop();
+        
+//         // CRITICAL FIX: Define onstop handler HERE, not in startRecording
+//         mediaRecorder.onstop = async () => {
+//             try {
+//                 // Determine actual format
+//                 const mimeType = mediaRecorder.mimeType || 'audio/wav';
+//                 const extension = mimeType.includes('webm') ? 'webm' : 'wav';
+                
+//                 // Create proper Blob
+//                 const audioBlob = new Blob(audioChunks, { type: mimeType });
+                
+//                 // CRITICAL: Create proper File object with all required properties
+//                 const timestamp = new Date().getTime();
+//                 const file = new File(
+//                     [audioBlob], 
+//                     `recorded_cough_${timestamp}.${extension}`,
+//                     { 
+//                         type: mimeType,
+//                         lastModified: timestamp
+//                     }
+//                 );
+                
+//                 console.log('✓ Recording stopped. File created:', {
+//                     name: file.name,
+//                     size: file.size,
+//                     type: file.type,
+//                     lastModified: new Date(file.lastModified).toISOString()
+//                 });
+                
+//                 // Handle the file
+//                 handleAudioFileSelect(file);
+                
+//                 // Clean up: Stop all media tracks
+//                 if (mediaRecorder.stream) {
+//                     mediaRecorder.stream.getTracks().forEach(track => track.stop());
+//                 }
+                
+//                 showNotification('Recording saved successfully!', 'success');
+                
+//             } catch (error) {
+//                 console.error('Error processing recording:', error);
+//                 showNotification('Failed to process recording. Please try again.', 'error');
+//             }
+//         };
+        
+//         document.getElementById('startRecordBtn').classList.remove('hidden');
+//         document.getElementById('stopRecordBtn').classList.add('hidden');
+//     }
+// }
+
+// function handleAudioFileSelect(file) {
+//     const validation = validateAudioFile(file);
+//     if (!validation.valid) {
+//         showNotification(validation.error, 'error');
+//         return;
+//     }
+    
+//     currentAudioFile = file;
+//     console.log('✓ Audio file selected:', {
+//         name: file.name,
+//         size: formatFileSize(file.size),
+//         type: file.type
+//     });
+    
+//     document.getElementById('audioUploadArea').style.display = 'none';
+//     document.getElementById('audioPreview').style.display = 'block';
+//     document.getElementById('audioFileName').textContent = `${file.name} (${formatFileSize(file.size)})`;
+//     document.getElementById('audioPlayer').src = URL.createObjectURL(file);
+// }
+
+// function removeAudioFile() {
+//     currentAudioFile = null;
+//     document.getElementById('audioUploadArea').style.display = 'block';
+//     document.getElementById('audioPreview').style.display = 'none';
+//     document.getElementById('audioFile').value = '';
+//     document.getElementById('audioPlayer').src = '';
+    
+//     // Reset recording buttons
+//     document.getElementById('startRecordBtn').classList.remove('hidden');
+//     document.getElementById('stopRecordBtn').classList.add('hidden');
+// }
+
+// // ============================================================================
+// // Prediction Submission
+// // ============================================================================
+
+// async function handlePredictionSubmit() {
+//     const form = document.getElementById('predictionForm');
+//     if (!form.checkValidity()) {
+//         form.reportValidity();
+//         return;
+//     }
+    
+//     if (!currentAudioFile) {
+//         showNotification('Please record or upload a cough sample', 'error');
+//         return;
+//     }
+    
+//     showLoading();
+    
+//     try {
+//         const formData = new FormData(form);
+        
+//         // CRITICAL: Remove any existing audio_file and add our file
+//         formData.delete('audio_file');
+//         formData.append('audio_file', currentAudioFile, currentAudioFile.name);
+
+//         console.log('📤 Submitting prediction with:', {
+//             audioFile: currentAudioFile.name,
+//             audioSize: formatFileSize(currentAudioFile.size),
+//             audioType: currentAudioFile.type
+//         });
+
+//         const response = await fetch(`${API_BASE_URL}/predict`, {
+//             method: 'POST',
+//             body: formData,
+//             mode: 'cors'
+//         });
+        
+//         const result = await response.json();
+        
+//         if (!response.ok) {
+//             throw new Error(result.detail || result.message || 'Prediction failed');
+//         }
+        
+//         console.log('✓ Prediction successful:', result);
+        
+//         predictionResult = result;
+//         displayPredictionResults(result);
+//         showNotification('Analysis completed!', 'success');
+        
+//     } catch (error) {
+//         console.error('❌ Prediction error:', error);
+//         showNotification(error.message || 'Prediction failed. Please try again.', 'error');
+//     } finally {
+//         hideLoading();
+//     }
+// }
+
+// function displayPredictionResults(result) {
+//     const resultsPanel = document.getElementById('resultsPanel');
+//     const isTBPositive = result.prediction_class === 1;
+    
+//     resultsPanel.style.display = 'block';
+//     resultsPanel.scrollIntoView({ behavior: 'smooth' });
+    
+//     document.getElementById('predictionBadge').className = `prediction-badge ${isTBPositive ? 'tb-positive' : 'tb-negative'}`;
+//     document.getElementById('badgeIcon').innerHTML = isTBPositive ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-check-circle"></i>';
+//     document.getElementById('predictionText').textContent = result.prediction;
+//     document.getElementById('probabilityText').textContent = `Probability: ${(result.probability * 100).toFixed(1)}%`;
+    
+//     document.getElementById('confidenceValue').textContent = result.confidence_level;
+//     document.getElementById('confidenceFill').style.width = `${(result.confidence * 100).toFixed(0)}%`;
+//     document.getElementById('recommendationText').textContent = result.recommendation;
+    
+//     const specImg = document.getElementById('spectrogramImage');
+//     if (result.spectrogram_base64) {
+//         document.getElementById('spectrogramCard').style.display = 'block';
+//         specImg.src = `data:image/png;base64,${result.spectrogram_base64}`;
+//     } else {
+//         document.getElementById('spectrogramCard').style.display = 'none';
+//     }
+// }
+
+// function resetPredictionForm() {
+//     document.getElementById('predictionForm').reset();
+//     removeAudioFile();
+//     document.getElementById('resultsPanel').style.display = 'none';
+//     window.scrollTo({ top: 0, behavior: 'smooth' });
+// }
+
+// // ============================================================================
+// // FAQ Accordion - FIXED
+// // ============================================================================
+
+// function initFAQ() {
+//     console.log('🔧 Initializing FAQ accordion...');
+    
+//     const faqItems = document.querySelectorAll('.faq-item');
+//     console.log(`✓ Found ${faqItems.length} FAQ items`);
+    
+//     if (faqItems.length === 0) {
+//         console.warn('⚠️ No FAQ items found. Not on FAQ page or elements missing.');
+//         return;
+//     }
+    
+//     faqItems.forEach((item, index) => {
+//         const question = item.querySelector('.faq-question');
+//         const answer = item.querySelector('.faq-answer');
+        
+//         if (!question) {
+//             console.error(`❌ FAQ item ${index} missing .faq-question`);
+//             return;
+//         }
+        
+//         if (!answer) {
+//             console.error(`❌ FAQ item ${index} missing .faq-answer`);
+//             return;
+//         }
+        
+//         // Remove existing listeners by cloning
+//         const newQuestion = question.cloneNode(true);
+//         question.replaceWith(newQuestion);
+        
+//         // Add click listener
+//         newQuestion.addEventListener('click', function(e) {
+//             e.preventDefault();
+//             e.stopPropagation();
+            
+//             console.log(`📌 Clicked FAQ item ${index + 1}`);
+            
+//             const isCurrentlyActive = item.classList.contains('active');
+            
+//             // Close all other items
+//             faqItems.forEach(otherItem => {
+//                 if (otherItem !== item) {
+//                     otherItem.classList.remove('active');
+//                 }
+//             });
+            
+//             // Toggle current item
+//             if (isCurrentlyActive) {
+//                 item.classList.remove('active');
+//                 console.log(`➖ Closed FAQ item ${index + 1}`);
+//             } else {
+//                 item.classList.add('active');
+//                 console.log(`➕ Opened FAQ item ${index + 1}`);
+//             }
+//         });
+        
+//         console.log(`✓ FAQ item ${index + 1} initialized`);
+//     });
+    
+//     console.log('✅ FAQ accordion fully initialized!');
+// }
+
+// // ============================================================================
+// // API Health Check
+// // ============================================================================
+
+// async function checkAPIHealth() {
+//     try {
+//         const response = await fetch(`${API_BASE_URL}/health`);
+//         const data = await response.json();
+//         if (data.status === 'healthy' && data.model_loaded) {
+//             console.log('✓ API is healthy and models loaded');
+//             return true;
+//         } else {
+//             console.warn('⚠️ API running but models not loaded');
+//             return false;
+//         }
+//     } catch (error) {
+//         console.error('✗ API health check failed:', error);
+//         return false;
+//     }
+// }
+
+// // ============================================================================
+// // Navigation
+// // ============================================================================
+
+// function initNavigation() {
+//     const navToggle = document.getElementById('navToggle');
+//     const navMenu = document.querySelector('.nav-menu');
+    
+//     if (!navToggle || !navMenu) return;
+    
+//     navToggle.addEventListener('click', () => {
+//         navMenu.classList.toggle('active');
+//         navToggle.classList.toggle('active');
+//     });
+    
+//     // Close menu when clicking outside
+//     document.addEventListener('click', (e) => {
+//         if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+//             navMenu.classList.remove('active');
+//             navToggle.classList.remove('active');
+//         }
+//     });
+    
+//     // Close menu when clicking link
+//     navMenu.querySelectorAll('.nav-link').forEach(link => {
+//         link.addEventListener('click', () => {
+//             navMenu.classList.remove('active');
+//             navToggle.classList.remove('active');
+//         });
+//     });
+// }
+
+// // ============================================================================
+// // Initialization
+// // ============================================================================
+
+// function initApp() {
+//     console.log('🚀 Initializing TBFusionAI...');
+    
+//     // Core functionality
+//     initNavigation();
+//     initPredictionPage();
+//     initFAQ();
+    
+//     // Check API
+//     checkAPIHealth();
+    
+//     console.log('✓ TBFusionAI initialized successfully');
+// }
+
+// // Initialize when DOM is ready
+// if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', initApp);
+// } else {
+//     initApp();
+// }
+
+// // Export for global access
+// window.TBFusionAI = {
+//     showLoading,
+//     hideLoading,
+//     showNotification,
+//     checkAPIHealth,
+//     initFAQ
+// };
 
 // /**
 //  * TBFusionAI - Main JavaScript Application
