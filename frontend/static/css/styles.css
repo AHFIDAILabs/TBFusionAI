@@ -1,5 +1,6 @@
 /* ============================================================================
-   TBFusionAI - Global Styles - UPDATED WITH BACKGROUND IMAGES
+   TBFusionAI - Complete Styles with All Fixes
+   Version: 2.0 - Corrected backgrounds, TB_02 sizing, FAQ accordion
    ============================================================================ */
 
 /* CSS Variables */
@@ -277,26 +278,30 @@ section {
 }
 
 /* ============================================================================
-   Hero Section - UPDATED WITH BACKGROUND IMAGE
+   Hero Section - FIXED: Full Page Background + Small TB_02 Image
    ============================================================================ */
 
 .hero {
-    background: linear-gradient(rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85)), 
-                url('/static/images/home_image.png');
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(59, 130, 246, 0.85) 100%),
+        url('/static/images/home_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-repeat: no-repeat;
+    position: relative;
     color: var(--white);
-    padding: var(--spacing-2xl) 0;
+    padding: 80px 0;
     overflow: hidden;
-    min-height: 600px;
 }
 
 .hero-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-xl);
+    grid-template-columns: 1.5fr 1fr;
+    gap: 60px;
     align-items: center;
+    min-height: 80vh;
 }
 
 .hero-title {
@@ -315,7 +320,7 @@ section {
 
 .hero-description {
     font-size: 1.25rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     margin-bottom: var(--spacing-lg);
 }
 
@@ -342,63 +347,70 @@ section {
 
 .stat-label {
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
 }
 
-/* UPDATED: Floating cards now use tb_02.png as background */
+/* FIXED: TB_02.PNG - Small image with floating cards nearby */
 .hero-image {
     position: relative;
-    background: url('/static/images/tb_02.png');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    min-height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 40px;
+}
+
+.hero-image img {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    object-fit: contain;
 }
 
 .floating-card {
     position: absolute;
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     color: var(--dark);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-xl);
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
+    gap: 10px;
     font-weight: 600;
+    font-size: 0.9rem;
     animation: float 3s ease-in-out infinite;
+    z-index: 10;
 }
 
 .floating-card i {
     color: var(--primary-color);
-    font-size: 1.5rem;
+    font-size: 1.3rem;
 }
 
 .card-1 {
     top: 10%;
-    right: -10%;
+    right: 0;
     animation-delay: 0s;
 }
 
 .card-2 {
-    bottom: 30%;
-    left: -10%;
+    bottom: 40%;
+    left: -20%;
     animation-delay: 1s;
 }
 
 .card-3 {
     bottom: 10%;
-    right: 10%;
+    right: -10%;
     animation-delay: 2s;
 }
 
 @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-15px); }
 }
 
 /* ============================================================================
@@ -614,17 +626,19 @@ section {
 }
 
 /* ============================================================================
-   Prediction Page - UPDATED WITH BACKGROUND IMAGE
+   Prediction Page - FIXED: Full Page Background
    ============================================================================ */
 
 .prediction-section {
-    background: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), 
-                url('/static/images/prediction_image.png');
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(59, 130, 246, 0.9) 100%),
+        url('/static/images/prediction_image.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    min-height: calc(100vh - 80px);
-    padding: var(--spacing-xl) 0;
+    background-repeat: no-repeat;
+    padding: 80px 0;
 }
 
 .prediction-container {
@@ -633,15 +647,14 @@ section {
 }
 
 .prediction-form-wrapper {
-    background-color: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
     padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
+    border-radius: 24px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
     margin-bottom: var(--spacing-xl);
 }
 
-/* UPDATED: Two-column layout for form sections */
 .form-sections-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -670,7 +683,6 @@ section {
     color: var(--primary-color);
 }
 
-/* Audio Upload */
 .audio-actions {
     display: flex;
     gap: var(--spacing-sm);
@@ -746,7 +758,6 @@ section {
     margin-top: var(--spacing-sm);
 }
 
-/* Form Elements */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -787,13 +798,12 @@ section {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* UPDATED: Results layout - side by side */
 .results-panel {
-    background-color: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
     padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
+    border-radius: 24px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
 }
 
 .results-header {
@@ -813,7 +823,6 @@ section {
     gap: var(--spacing-md);
 }
 
-/* UPDATED: Side-by-side layout for results and spectrogram */
 .results-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -863,7 +872,6 @@ section {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
-/* Confidence Card */
 .confidence-card {
     background-color: var(--lighter);
     padding: var(--spacing-md);
@@ -897,7 +905,6 @@ section {
     transition: width 0.5s ease;
 }
 
-/* Spectrogram & Cards */
 .spectrogram-card,
 .recommendation-card,
 .disclaimer-card {
@@ -934,7 +941,6 @@ section {
     color: var(--warning-color);
 }
 
-/* Results Actions */
 .results-actions {
     display: flex;
     gap: var(--spacing-sm);
@@ -945,7 +951,6 @@ section {
     flex: 1;
 }
 
-/* Loading Overlay */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -975,7 +980,7 @@ section {
 }
 
 /* ============================================================================
-   FAQ Page - UPDATED WITH BACKGROUND IMAGE
+   FAQ Page - FIXED: Full Page Background + Working Accordion
    ============================================================================ */
 
 .faq-hero {
@@ -1004,10 +1009,23 @@ section {
 }
 
 .faq-section {
-    background-color: var(--lighter);
+    min-height: 100vh;
+    background: 
+        linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(59, 130, 246, 0.9) 100%),
+        url('/static/images/faq_image.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    padding: 80px 0;
 }
 
 .faq-container {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(15px);
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
     max-width: 900px;
     margin: 0 auto;
 }
@@ -1030,41 +1048,49 @@ section {
     color: var(--primary-color);
 }
 
-/* UPDATED: FAQ Accordion with proper functionality */
+/* FAQ Accordion - Complete Working Styles */
 .faq-item {
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    margin-bottom: var(--spacing-sm);
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 16px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
 }
 
+.faq-item:hover {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+
 .faq-question {
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-md);
-    cursor: pointer;
-    transition: var(--transition);
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: background 0.3s ease;
     user-select: none;
 }
 
 .faq-question:hover {
-    background-color: var(--lighter);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
 }
 
 .faq-question h3 {
-    color: var(--dark);
-    font-size: 1.125rem;
+    color: white;
     margin: 0;
+    font-size: 1.1rem;
     flex: 1;
 }
 
 .faq-question i {
-    color: var(--primary-color);
-    transition: transform 0.3s ease;
-    font-size: 1.25rem;
+    transition: transform 0.4s ease;
+    font-size: 1.3rem;
+    color: white;
 }
 
 .faq-item.active .faq-question i {
@@ -1074,29 +1100,36 @@ section {
 .faq-answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease, padding 0.4s ease;
-    background-color: var(--lighter);
+    transition: max-height 0.5s ease, padding 0.5s ease;
+    padding: 0 28px;
+    background: white;
 }
 
 .faq-item.active .faq-answer {
-    max-height: 2000px;
-    padding: var(--spacing-md);
+    max-height: 3000px;
+    padding: 28px;
 }
 
 .faq-answer p {
-    color: var(--gray);
-    margin-bottom: var(--spacing-sm);
+    margin: 0 0 16px 0;
+    line-height: 1.7;
+    color: #374151;
+}
+
+.faq-answer p:last-child {
+    margin-bottom: 0;
 }
 
 .faq-answer ul,
 .faq-answer ol {
-    margin: var(--spacing-sm) 0;
-    padding-left: var(--spacing-lg);
+    margin: 16px 0;
+    padding-left: 24px;
 }
 
 .faq-answer li {
-    margin-bottom: var(--spacing-xs);
-    color: var(--gray);
+    margin-bottom: 8px;
+    color: #374151;
+    line-height: 1.6;
 }
 
 .faq-answer a {
@@ -1134,10 +1167,15 @@ section {
 @media (max-width: 1024px) {
     .hero-content {
         grid-template-columns: 1fr;
+        gap: 40px;
     }
     
-    .hero-image {
-        min-height: 400px;
+    .hero-image img {
+        max-width: 180px;
+    }
+    
+    .card-2 {
+        left: 0;
     }
     
     .form-sections-container {
@@ -1170,6 +1208,23 @@ section {
     
     .page-title {
         font-size: 2rem;
+    }
+    
+    .hero-image img {
+        max-width: 150px;
+    }
+    
+    .floating-card {
+        font-size: 0.8rem;
+        padding: 10px 16px;
+    }
+    
+    .card-1,
+    .card-2,
+    .card-3 {
+        position: static;
+        margin: 12px auto;
+        display: inline-flex;
     }
     
     .nav-menu {
@@ -1231,10 +1286,6 @@ section {
         width: 100%;
         justify-content: center;
     }
-    
-    .hero-image {
-        min-height: 300px;
-    }
 }
 
 /* ============================================================================
@@ -1252,176 +1303,3 @@ section {
 .mb-lg { margin-bottom: var(--spacing-lg); }
 .hidden { display: none !important; }
 .visible { display: block !important; }
-
-/* ==========================================================================
-   CRITICAL FIXES FOR BACKGROUNDS
-   ========================================================================== */
-
-/* 1. HOME PAGE - Full page background */
-.hero {
-    min-height: 100vh;
-    background: 
-        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
-        url('/static/images/home_image.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    position: relative;
-}
-
-/* 2. TB_02.PNG - Reduce to 1/10 size (10% width) */
-.hero-image {
-    width: 10%; /* Changed from 100% to 10% */
-    max-width: 150px; /* Limit maximum size */
-    height: auto;
-    background: url('/static/images/tb_02.png');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-/* Floating cards container - no background needed */
-.floating-cards {
-    background: transparent; /* Remove tb_02 from here */
-    padding: 60px 0;
-}
-
-/* Individual cards styling */
-.feature-card,
-.model-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.feature-card:hover,
-.model-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* 3. PREDICTION PAGE - Full page background */
-.prediction-section {
-    min-height: 100vh;
-    background: 
-        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
-        url('/static/images/prediction_image.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    padding: 80px 0;
-}
-
-/* Prediction form container */
-.prediction-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* 4. FAQ PAGE - Full page background */
-.faq-section {
-    min-height: 100vh;
-    background: 
-        linear-gradient(135deg, rgba(0, 51, 102, 0.85) 0%, rgba(0, 102, 204, 0.75) 100%),
-        url('/static/images/faq_image.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    padding: 80px 0;
-}
-
-/* FAQ container */
-.faq-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-/* FAQ Accordion Styling */
-.faq-item {
-    background: white;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.faq-item:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.faq-question {
-    padding: 20px 25px;
-    background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-    color: white;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: background 0.3s ease;
-    user-select: none;
-}
-
-.faq-question:hover {
-    background: linear-gradient(135deg, #0052a3 0%, #003d7a 100%);
-}
-
-.faq-question i {
-    transition: transform 0.3s ease;
-    font-size: 1.2rem;
-}
-
-.faq-item.active .faq-question i {
-    transform: rotate(180deg);
-}
-
-.faq-answer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease, padding 0.4s ease;
-    padding: 0 25px;
-    background: white;
-}
-
-.faq-item.active .faq-answer {
-    max-height: 2000px;
-    padding: 25px;
-}
-
-.faq-answer p {
-    margin: 0;
-    line-height: 1.6;
-    color: #333;
-}
-
-/* Ensure text is readable on backgrounds */
-.hero h1,
-.hero h2,
-.hero p,
-.prediction-section h1,
-.prediction-section h2,
-.faq-section h1,
-.faq-section h2 {
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
