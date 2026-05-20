@@ -94,7 +94,8 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="age">Age *</label>
-                                        <input type="number" id="age" name="age" min="0" max="120" required>
+                                        <input type="number" id="age" name="age" min="1" max="120" required>
+                                        <p id="age-error" style="color:#dc2626;font-size:0.8rem;margin-top:0.25rem;display:none;"></p>
                                     </div>
                                     <div class="form-group">
                                         <label for="sex">Sex *</label>
@@ -110,6 +111,7 @@
                                     <div class="form-group full-width">
                                         <label for="coughDuration">Cough Duration (days) *</label>
                                         <input type="number" id="coughDuration" name="reported_cough_dur" min="0" required>
+                                        <p id="coughDuration-error" style="color:#dc2626;font-size:0.8rem;margin-top:0.25rem;display:none;"></p>
                                     </div>
                                 </div>
 
@@ -166,7 +168,7 @@
 
                         <div class="text-center mt-lg">
                             <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
-                                <i class="fas fa-search"></i> Analyze Screening Data
+                                <i class="fas fa-save"></i> Save &amp; Analyze
                             </button>
                         </div>
                     </form>
@@ -180,6 +182,9 @@
                         <h3 class="results-title">
                             <i class="fas fa-chart-bar"></i> Screening Results
                         </h3>
+                        <p id="participantIdDisplay" style="display:none;font-size:0.8rem;color:#6b7280;margin-top:0.25rem;">
+                            <i class="fas fa-id-card"></i> Participant ID: <span id="participantIdText"></span>
+                        </p>
                     </div>
 
                     <div class="results-content">
@@ -251,7 +256,7 @@
     <div class="loading-overlay" id="loadingOverlay" style="display: none;">
         <div class="loading-spinner">
             <i class="fas fa-circle-notch fa-spin"></i>
-            <p>Analyzing audio and clinical data...</p>
+            <p>Analyzing and saving participant record...</p>
         </div>
     </div>
 

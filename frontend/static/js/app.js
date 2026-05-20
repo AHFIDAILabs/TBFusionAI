@@ -328,50 +328,94 @@ async function handlePredictionSubmit() {
         form.reportValidity();
         return;
     }
-    
+
     if (!currentAudioFile) {
         showNotification('Please record or upload a cough sample', 'error');
         return;
     }
-    
+
+    clearFieldErrors();
     showLoading();
-    
+
     try {
         const formData = new FormData(form);
-        
+
         // CRITICAL: Remove any existing audio_file and add our file
         formData.delete('audio_file');
         formData.append('audio_file', currentAudioFile, currentAudioFile.name);
 
-        console.log('📤 Submitting prediction:', {
+        console.log('📤 Saving participant + prediction:', {
             audioFile: currentAudioFile.name,
             audioSize: formatFileSize(currentAudioFile.size),
             audioType: currentAudioFile.type
         });
 
-        const response = await fetch(`${API_BASE_URL}/predict`, {
+        const response = await fetch(`${API_BASE_URL}/participants`, {
             method: 'POST',
             body: formData,
             mode: 'cors'
         });
-        
+
         const result = await response.json();
-        
+
         if (!response.ok) {
-            throw new Error(result.detail || result.message || 'Prediction failed');
+            if (result.fields) {
+                showFieldErrors(result.fields);
+                showNotification('Please correct the highlighted fields', 'error');
+                return;
+            }
+            throw new Error(result.detail || result.message || 'Submission failed');
         }
-        
-        console.log('✓ Prediction successful:', result);
-        
+
+        console.log('✓ Participant saved:', result.participant.participantId);
+
         predictionResult = result;
-        displayPredictionResults(result);
-        showNotification('Analysis completed!', 'success');
-        
+        displayPredictionResults(result.prediction);
+        showParticipantId(result.participant.participantId);
+        showNotification('Analysis complete — participant record saved!', 'success');
+
     } catch (error) {
-        console.error('❌ Prediction error:', error);
-        showNotification(error.message || 'Prediction failed. Please try again.', 'error');
+        console.error('❌ Submit error:', error);
+        showNotification(error.message || 'Submission failed. Please try again.', 'error');
     } finally {
         hideLoading();
+    }
+}
+
+function clearFieldErrors() {
+    document.querySelectorAll('.field-error-msg').forEach(el => {
+        el.textContent = '';
+        el.style.display = 'none';
+    });
+    // target by id for the two validated fields
+    ['age-error', 'coughDuration-error'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = ''; el.style.display = 'none'; }
+    });
+}
+
+function showFieldErrors(fields) {
+    const fieldMap = {
+        age: 'age-error',
+        coughDuration: 'coughDuration-error',
+    };
+    Object.entries(fields).forEach(([field, message]) => {
+        const errorId = fieldMap[field];
+        if (errorId) {
+            const el = document.getElementById(errorId);
+            if (el) { el.textContent = message; el.style.display = 'block'; }
+        } else {
+            showNotification(`${field}: ${message}`, 'error');
+        }
+    });
+}
+
+function showParticipantId(participantId) {
+    const display = document.getElementById('participantIdDisplay');
+    const text = document.getElementById('participantIdText');
+    if (display && text) {
+        text.textContent = participantId;
+        display.style.display = 'block';
     }
 }
 
@@ -403,7 +447,11 @@ function displayPredictionResults(result) {
 function resetPredictionForm() {
     document.getElementById('predictionForm').reset();
     removeAudioFile();
+    clearFieldErrors();
     document.getElementById('resultsPanel').style.display = 'none';
+    const pidDisplay = document.getElementById('participantIdDisplay');
+    if (pidDisplay) { pidDisplay.style.display = 'none'; }
+    predictionResult = null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
