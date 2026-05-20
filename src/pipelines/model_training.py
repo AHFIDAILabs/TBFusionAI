@@ -43,7 +43,6 @@ from xgboost import XGBClassifier
 from src.config import get_config
 from src.logger import get_logger
 
-warnings.filterwarnings("ignore")
 logger = get_logger(__name__)
 
 
@@ -61,6 +60,7 @@ class AsymmetricLossMLPClassifier(MLPClassifier):
     def fit(self, X, y, **fit_kwargs):
         sample_weight = np.where(y == 1, self.fn_cost, self.fp_cost)
         sample_weight = sample_weight / sample_weight.sum() * len(y)
+        fit_kwargs["sample_weight"] = sample_weight
         return super().fit(X, y, **fit_kwargs)
 
 
