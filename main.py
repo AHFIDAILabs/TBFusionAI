@@ -401,52 +401,10 @@ def clean(confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirma
     console.print("[green]✓ Cleanup complete![/green]\n")
 
 
-# @app.command()
-# def serve(
-#     host: str = typer.Option("0.0.0.0", "--host", help="Host to bind to"),
-#     port: int = typer.Option(8000, "--port", help="Port to bind to"),
-#     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
-#     workers: int = typer.Option(4, "--workers", help="Number of worker processes"),
-# ):
-#     """Start the FastAPI server for inference."""
-#     console.print(
-#         Panel.fit(
-#             f"[bold cyan]Starting TBFusionAI API Server[/bold cyan]\n\n"
-#             f"Host: {host}:{port}\n"
-#             f"Workers: {workers}\n"
-#             f"Auto-reload: {reload}",
-#             border_style="cyan",
-#         )
-#     )
-
-#     # Check if models are trained
-#     status = check_pipeline_status()
-#     if not status["model_training"]:
-#         console.print("\n[bold red]✗ No trained models found![/bold red]")
-#         console.print("[yellow]Run 'python main.py run-pipeline' first[/yellow]\n")
-#         sys.exit(1)
-
-#     try:
-#         import uvicorn
-
-#         uvicorn.run(
-#             "src.api.main:app",
-#             host=host,
-#             port=port,
-#             reload=reload,
-#             workers=1 if reload else workers,
-#             log_level="info",
-#         )
-#     except Exception as e:
-#         console.print(f"[bold red]✗ Server failed: {e}[/bold red]")
-#         logger.error(f"API server failed: {e}", exc_info=True)
-#         sys.exit(1)
-
-
 @app.command()
 def serve(
     host: str = typer.Argument("0.0.0.0", help="Host to bind to"),
-    port: int = typer.Argument(8080, help="Port to bind to"),
+    port: int = typer.Argument(8000, help="Port to bind to"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
     workers: int = typer.Option(
         1, "--workers", help="Workers (set to 1 for Cloud Run)"
