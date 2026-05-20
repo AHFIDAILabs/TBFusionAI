@@ -13,14 +13,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-# Pre-downloaded CPU-only wheels (avoids unreliable network inside Docker VM)
-COPY docker/wheels/ /tmp/wheels/
-
+# Install CPU-only torch from PyTorch's official index, then the rest of requirements.
+# Splitting the install avoids pip trying to resolve GPU torch variants for other packages.
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir /tmp/wheels/torch-2.0.1+cpu-cp310-cp310-linux_x86_64.whl && \
-    pip install --no-cache-dir /tmp/wheels/torchaudio-2.0.2+cpu-cp310-cp310-linux_x86_64.whl
+    pip install --no-cache-dir \
+        "torch==2.0.1+cpu" \
+        "torchaudio==2.0.2+cpu" \
+        --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Install remaining requirements (torch/torchaudio already satisfied above)
 RUN grep -vE "^torch(audio)?==" requirements.txt > /tmp/req-no-torch.txt && \
     pip install --no-cache-dir -r /tmp/req-no-torch.txt
 
