@@ -430,6 +430,30 @@ class FeaturePreprocessor:
         return encoded_clinical
 
 
+def extract_audio_features(
+    audio_input: Union[str, Path, bytes, io.BytesIO], validate_quality: bool = True
+) -> np.ndarray:
+    """Quick function to extract audio features."""
+    preprocessor = AudioPreprocessor()
+    return preprocessor.extract_features(audio_input, validate_quality=validate_quality)
+
+
+def generate_spectrogram(
+    audio_input: Union[str, Path, bytes, io.BytesIO],
+) -> Image.Image:
+    """Quick function to generate spectrogram."""
+    preprocessor = AudioPreprocessor()
+    return preprocessor.generate_spectrogram(audio_input)
+
+
+def validate_audio_quality(
+    audio_input: Union[str, Path, bytes, io.BytesIO],
+) -> Tuple[bool, Optional[str], Dict[str, float]]:
+    """Quick function to validate audio quality."""
+    preprocessor = AudioPreprocessor()
+    return preprocessor.validate_audio_quality(audio_input)
+
+
 if __name__ == "__main__":
     preprocessor = AudioPreprocessor()
     logger.info("AudioPreprocessor ready for testing")
