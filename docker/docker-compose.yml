@@ -1,8 +1,4 @@
-
 services:
-  # ============================================================================
-  # TBFusionAI API Service
-  # ============================================================================
   api:
     build:
       context: ..
@@ -12,16 +8,16 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Mount artifacts directory for persistence
+      # Persist trained models and logs across rebuilds
       - ../artifacts:/app/artifacts
-      # Mount frontend for development
+      # Mount frontend so HTML/CSS/JS changes don't require a rebuild
       - ../frontend:/app/frontend
-      # Mount source code for development (optional)
-      # - ../src:/app/src
     environment:
+      - APP_HOME=/app
       - ENVIRONMENT=production
       - API_HOST=0.0.0.0
       - API_PORT=8000
+      - PORT=8000
       - API_WORKERS=4
       - API_RELOAD=false
       - LOG_LEVEL=INFO
@@ -35,64 +31,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-
-  # ============================================================================
-  # Redis (Optional - for caching and rate limiting)
-  # ============================================================================
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: tbfusionai-redis
-  #   ports:
-  #     - "6379:6379"
-  #   volumes:
-  #     - redis-data:/data
-  #   networks:
-  #     - tbfusionai-network
-  #   restart: unless-stopped
-  #   command: redis-server --appendonly yes
-
-  # ============================================================================
-  # PostgreSQL (Optional - for storing predictions/logs)
-  # ============================================================================
-  # db:
-  #   image: postgres:15-alpine
-  #   container_name: tbfusionai-db
-  #   environment:
-  #     POSTGRES_DB: tbfusionai
-  #     POSTGRES_USER: tbuser
-  #     POSTGRES_PASSWORD: changeme
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   networks:
-  #     - tbfusionai-network
-  #   restart: unless-stopped
-
-  # ============================================================================
-  # Nginx (Optional - for reverse proxy and load balancing)
-  # ============================================================================
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: tbfusionai-nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ../frontend/static:/usr/share/nginx/html/static:ro
-  #   depends_on:
-  #     - api
-  #   networks:
-  #     - tbfusionai-network
-  #   restart: unless-stopped
+      start_period: 60s
 
 networks:
   tbfusionai-network:
     driver: bridge
 
 volumes:
-  # redis-data:
-  # postgres-data:
   artifacts-data:
