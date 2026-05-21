@@ -193,6 +193,16 @@ async def prediction_page(request: Request):
         )
 
 
+@app.get("/participants", response_class=HTMLResponse, include_in_schema=False)
+async def participants_page(request: Request):
+    """Render participants data page."""
+    try:
+        return templates.TemplateResponse("participants.html", {"request": request})
+    except Exception as e:
+        logger.error(f"Failed to render participants page: {str(e)}")
+        return HTMLResponse(content="<h1>Participants</h1>", status_code=200)
+
+
 @app.get("/faq", response_class=HTMLResponse, include_in_schema=False)
 async def faq_page(request: Request):
     """Render FAQ page."""

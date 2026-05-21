@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBFusionAI - Participants</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%232563eb' d='M464 256c0-80.1-40.4-142.1-98-175.7c-17.6-10.3-37-17.1-57-20.2V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V60.1c-20 3.1-39.4 9.9-57 20.2C130.4 113.9 90 175.9 90 256c0 10.1 .5 20.1 1.5 30c-11.8 12.3-19.5 28.5-20.9 46.5c-3.1 39.1 13.9 77.7 44.1 103.5c11.9 10.2 21.2 23.3 27 38c1.3 3.3 4.4 5.4 7.9 5.7c38.1 3 118.4-18.1 127.4-85.3c.6-4.5 4.3-7.8 8.9-8.1l1.1-.1 1.1 .1c4.5 .3 8.3 3.6 8.9 8.1c9 67.2 89.3 88.3 127.4 85.3c3.5-.3 6.6-2.4 7.9-5.7c5.8-14.7 15.1-27.8 27-38c30.1-25.8 47.1-64.4 44.1-103.5c-1.4-18-9-34.1-20.9-46.5c1-9.9 1.5-19.9 1.5-30z'/></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-lungs"></i>
+                <span>TBFusionAI</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">Home</a></li>
+                <li><a href="/prediction" class="nav-link">Prediction</a></li>
+                <li><a href="/participants" class="nav-link active">Participants</a></li>
+                <li><a href="/faq" class="nav-link">FAQ</a></li>
+                <li><a href="/api/docs" class="nav-link" target="_blank">API Docs</a></li>
+            </ul>
+            <div class="nav-toggle" id="navToggle">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="participants-hero">
+        <div class="container">
+            <h1 class="page-title"><i class="fas fa-users"></i> Participant Records</h1>
+            <p class="page-subtitle">All screening sessions saved to the database</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="participants-section">
+        <div class="container">
+            <div class="participants-wrapper">
+
+                <!-- Summary Stats -->
+                <div class="stats-row" id="statsRow">
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="background: var(--gradient-primary);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-value" id="statTotal">—</div>
+                            <div class="stat-card-label">Total Screened</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg,#ef4444,#dc2626);">
+                            <i class="fas fa-virus"></i>
+                        </div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-value" id="statPositive">—</div>
+                            <div class="stat-card-label">TB Positive</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
+                            <i class="fas fa-shield-virus"></i>
+                        </div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-value" id="statNegative">—</div>
+                            <div class="stat-card-label">TB Negative</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-card-body">
+                            <div class="stat-card-value" id="statRate">—</div>
+                            <div class="stat-card-label">Positivity Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls Bar -->
+                <div class="controls-bar">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="">All</button>
+                        <button class="filter-btn" data-filter="TB-Positive">TB Positive</button>
+                        <button class="filter-btn" data-filter="TB-Negative">TB Negative</button>
+                    </div>
+                    <button class="btn btn-outline" id="exportCsvBtn">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-wrapper">
+                    <div id="loadingState" class="table-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading records…</p>
+                    </div>
+                    <div id="emptyState" class="table-state hidden">
+                        <i class="fas fa-inbox"></i>
+                        <p>No participant records found.</p>
+                    </div>
+                    <div id="errorState" class="table-state hidden">
+                        <i class="fas fa-exclamation-triangle" style="color:var(--danger-color)"></i>
+                        <p id="errorMsg">Failed to load records.</p>
+                    </div>
+                    <table class="participants-table hidden" id="participantsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date / Time</th>
+                                <th>Age</th>
+                                <th>Sex</th>
+                                <th>Cough (days)</th>
+                                <th>Symptoms</th>
+                                <th>Result</th>
+                                <th>Probability</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantsTbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination-bar" id="paginationBar">
+                    <button class="btn btn-outline" id="prevBtn" disabled>
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </button>
+                    <span class="pagination-info" id="pageInfo">Page 1</span>
+                    <button class="btn btn-outline" id="nextBtn" disabled>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title"><i class="fas fa-lungs"></i> TBFusionAI</h3>
+                    <p class="footer-description">AI-powered tuberculosis detection using advanced cough sound analysis.</p>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-heading">Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/prediction">Prediction</a></li>
+                        <li><a href="/participants">Participants</a></li>
+                        <li><a href="/faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-heading">Disclaimer</h4>
+                    <p class="footer-text">TBFusionAI is an AI-assisted screening tool and NOT a diagnostic device. Results should always be verified by qualified healthcare professionals.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AHFID AI Labs. All rights reserved.</p>
+                <p>Version 1.0.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function () {
+        const PAGE_SIZE = 20;
+        let currentPage = 0;
+        let currentFilter = '';
+        let totalRecords = 0;
+        let allData = [];
+
+        const tbody = document.getElementById('participantsTbody');
+        const table = document.getElementById('participantsTable');
+        const loading = document.getElementById('loadingState');
+        const empty = document.getElementById('emptyState');
+        const errorEl = document.getElementById('errorState');
+        const errorMsg = document.getElementById('errorMsg');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageInfo = document.getElementById('pageInfo');
+
+        function showOnly(el) {
+            [loading, empty, errorEl, table].forEach(e => e.classList.add('hidden'));
+            el.classList.remove('hidden');
+        }
+
+        function symptomIcons(row) {
+            const map = [
+                ['priorTBHistory', 'fa-history', 'Prior TB'],
+                ['hemoptysis',     'fa-tint',    'Hemoptysis'],
+                ['weightLoss',     'fa-weight',  'Weight Loss'],
+                ['fever',          'fa-thermometer-half', 'Fever'],
+                ['nightSweats',    'fa-moon',    'Night Sweats'],
+            ];
+            return map.filter(([k]) => row[k])
+                      .map(([, icon, label]) => `<span class="symptom-icon" title="${label}"><i class="fas ${icon}"></i></span>`)
+                      .join('') || '<span class="no-symptoms">None</span>';
+        }
+
+        function resultBadge(result) {
+            const positive = result === 'TB-Positive';
+            const cls = positive ? 'badge-positive' : 'badge-negative';
+            const icon = positive ? 'fa-virus' : 'fa-shield-virus';
+            return `<span class="result-badge ${cls}"><i class="fas ${icon}"></i> ${result}</span>`;
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        function renderRows(items) {
+            tbody.innerHTML = items.map((p, i) => {
+                const rowNum = currentPage * PAGE_SIZE + i + 1;
+                const prob = (p.prediction.probability * 100).toFixed(1) + '%';
+                return `<tr>
+                    <td class="row-num">${rowNum}</td>
+                    <td>${formatDate(p.timestamp)}</td>
+                    <td>${p.age}</td>
+                    <td>${p.sex}</td>
+                    <td>${p.coughDuration}</td>
+                    <td class="symptoms-cell">${symptomIcons(p)}</td>
+                    <td>${resultBadge(p.prediction.result)}</td>
+                    <td>
+                        <div class="prob-bar-wrap">
+                            <div class="prob-bar" style="width:${prob}; background:${p.prediction.result==='TB-Positive'?'#ef4444':'#10b981'}"></div>
+                        </div>
+                        <span class="prob-label">${prob}</span>
+                    </td>
+                    <td><span class="confidence-pill">${p.prediction.confidenceLevel}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function loadPage(page, filter) {
+            showOnly(loading);
+            const offset = page * PAGE_SIZE;
+            const filterParam = filter ? `&prediction=${encodeURIComponent(filter)}` : '';
+            try {
+                const res = await fetch(`/api/v1/participants?limit=${PAGE_SIZE}&offset=${offset}${filterParam}`);
+                if (!res.ok) throw new Error(`Server error ${res.status}`);
+                const data = await res.json();
+                totalRecords = data.total;
+                allData = data.items;
+
+                if (data.items.length === 0) { showOnly(empty); }
+                else {
+                    renderRows(data.items);
+                    showOnly(table);
+                }
+
+                const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+                pageInfo.textContent = `Page ${page + 1} of ${Math.max(1, totalPages)} (${totalRecords} records)`;
+                prevBtn.disabled = page === 0;
+                nextBtn.disabled = (page + 1) >= totalPages;
+            } catch (e) {
+                errorMsg.textContent = 'Failed to load records: ' + e.message;
+                showOnly(errorEl);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const [all, pos, neg] = await Promise.all([
+                    fetch('/api/v1/participants?limit=1&offset=0').then(r => r.json()),
+                    fetch('/api/v1/participants?limit=1&offset=0&prediction=TB-Positive').then(r => r.json()),
+                    fetch('/api/v1/participants?limit=1&offset=0&prediction=TB-Negative').then(r => r.json()),
+                ]);
+                document.getElementById('statTotal').textContent = all.total;
+                document.getElementById('statPositive').textContent = pos.total;
+                document.getElementById('statNegative').textContent = neg.total;
+                const rate = all.total > 0 ? ((pos.total / all.total) * 100).toFixed(1) + '%' : '0%';
+                document.getElementById('statRate').textContent = rate;
+            } catch (_) {}
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                currentPage = 0;
+                loadPage(currentPage, currentFilter);
+            });
+        });
+
+        prevBtn.addEventListener('click', () => { currentPage--; loadPage(currentPage, currentFilter); });
+        nextBtn.addEventListener('click', () => { currentPage++; loadPage(currentPage, currentFilter); });
+
+        // Export CSV
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            if (allData.length === 0) return;
+            const headers = ['ID','Date','Age','Sex','CoughDuration','PriorTB','Hemoptysis','WeightLoss','Fever','NightSweats','Result','Probability','Confidence','Recommendation'];
+            const rows = allData.map(p => [
+                p.participantId,
+                p.timestamp,
+                p.age,
+                p.sex,
+                p.coughDuration,
+                p.priorTBHistory ? 'Yes' : 'No',
+                p.hemoptysis ? 'Yes' : 'No',
+                p.weightLoss ? 'Yes' : 'No',
+                p.fever ? 'Yes' : 'No',
+                p.nightSweats ? 'Yes' : 'No',
+                p.prediction.result,
+                (p.prediction.probability * 100).toFixed(2) + '%',
+                p.prediction.confidenceLevel,
+                `"${p.prediction.recommendation.replace(/"/g,'""')}"`,
+            ]);
+            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], {type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'participants.csv'; a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Mobile nav toggle
+        document.getElementById('navToggle').addEventListener('click', () => {
+            document.querySelector('.nav-menu').classList.toggle('active');
+        });
+
+        // Init
+        loadStats();
+        loadPage(0, '');
+    })();
+    </script>
+</body>
+</html>
