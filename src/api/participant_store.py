@@ -1,39 +1,29 @@
-"""
-JSON file-based participant store.
+"""PostgreSQL-backed participant store.
 
-FLAG FOR PRODUCTION REVIEW: This stores records in a local JSON file and audio
-files on disk.  Replace with a relational or document database before deploying
-to a multi-instance or cloud environment.
+Audio bytes are persisted as BYTEA in the database — required for Cloud Run
+where the container filesystem is ephemeral and cannot be relied on for storage.
 """
 
-import json
-import threading
-import uuid
-from datetime import datetime
-from pathlib import Path
 from typing import Dict
 
-from src.config import get_config
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.db.models import Participant
 from src.logger import get_logger
 
 logger = get_logger(__name__)
 
-_lock = threading.Lock()
-
 
 class ParticipantStore:
-    def __init__(self):
-        config = get_config()
-        self._audio_dir = config.paths.participants_path / "audio"
-        self._records_file = config.paths.participants_path / "participants.json"
-        self._project_root = config.paths.project_root
-        self._audio_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db: AsyncSession):
+        self._db = db
 
-    def save(
+    async def save(
         self,
         audio_bytes: bytes,
         audio_filename: str,
         age: int,
+        sex: str,
         cough_duration: int,
         prior_tb_history: bool,
         hemoptysis: bool,
@@ -42,67 +32,46 @@ class ParticipantStore:
         night_sweats: bool,
         prediction_result: Dict,
     ) -> Dict:
-        try:
-            participant_id = str(uuid.uuid4())
-            timestamp = datetime.now().isoformat(timespec="seconds")
-            cough_sound = self._save_audio(participant_id, audio_filename, audio_bytes)
+        participant = Participant(
+            audio_filename=audio_filename,
+            audio_data=audio_bytes,
+            age=age,
+            sex=sex,
+            cough_duration=cough_duration,
+            prior_tb_history=prior_tb_history,
+            hemoptysis=hemoptysis,
+            weight_loss=weight_loss,
+            fever=fever,
+            night_sweats=night_sweats,
+            prediction=prediction_result.get("prediction", ""),
+            prediction_class=prediction_result.get("prediction_class", 0),
+            probability=prediction_result.get("probability", 0.0),
+            confidence_level=prediction_result.get("confidence_level", ""),
+            recommendation=prediction_result.get("recommendation", ""),
+        )
 
-            record = {
-                "participantId": participant_id,
-                "timestamp": timestamp,
-                "coughSound": cough_sound,
-                "age": age,
-                "coughDuration": cough_duration,
-                "priorTBHistory": prior_tb_history,
-                "hemoptysis": hemoptysis,
-                "weightLoss": weight_loss,
-                "fever": fever,
-                "nightSweats": night_sweats,
-                "prediction": {
-                    "result": prediction_result.get("prediction", ""),
-                    "predictionClass": prediction_result.get("prediction_class", 0),
-                    "probability": prediction_result.get("probability", 0.0),
-                    "confidenceLevel": prediction_result.get("confidence_level", ""),
-                    "recommendation": prediction_result.get("recommendation", ""),
-                },
-            }
+        self._db.add(participant)
+        await self._db.commit()
+        await self._db.refresh(participant)
 
-            self._append_record(record)
-            logger.info(f"Participant saved: {participant_id}")
-            return record
+        logger.info(f"Participant saved: {participant.id}")
 
-        except Exception as e:
-            logger.error(f"Failed to save participant: {e}")
-            raise
-
-    def _save_audio(
-        self, participant_id: str, original_filename: str, audio_bytes: bytes
-    ) -> str:
-        safe_name = Path(original_filename).name
-        dest = self._audio_dir / f"{participant_id}_{safe_name}"
-        try:
-            dest.write_bytes(audio_bytes)
-        except OSError as e:
-            logger.error(f"Failed to write audio {dest}: {e}")
-            raise
-        try:
-            return str(dest.relative_to(self._project_root))
-        except ValueError:
-            return str(dest)
-
-    def _append_record(self, record: Dict) -> None:
-        with _lock:
-            try:
-                records = (
-                    json.loads(self._records_file.read_text(encoding="utf-8"))
-                    if self._records_file.exists()
-                    else []
-                )
-                records.append(record)
-                self._records_file.write_text(
-                    json.dumps(records, indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
-            except Exception as e:
-                logger.error(f"Failed to write participants.json: {e}")
-                raise
+        return {
+            "participantId": str(participant.id),
+            "timestamp": participant.created_at.isoformat(),
+            "age": participant.age,
+            "sex": participant.sex,
+            "coughDuration": participant.cough_duration,
+            "priorTBHistory": participant.prior_tb_history,
+            "hemoptysis": participant.hemoptysis,
+            "weightLoss": participant.weight_loss,
+            "fever": participant.fever,
+            "nightSweats": participant.night_sweats,
+            "prediction": {
+                "result": participant.prediction,
+                "predictionClass": participant.prediction_class,
+                "probability": participant.probability,
+                "confidenceLevel": participant.confidence_level,
+                "recommendation": participant.recommendation,
+            },
+        }

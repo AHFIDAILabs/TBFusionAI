@@ -14,6 +14,7 @@ from typing import Dict
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.dependencies import (
     get_app_config,
@@ -33,6 +34,7 @@ from src.api.schemas import (
     PredictionResponse,
 )
 from src.config import Config
+from src.db.engine import get_db
 from src.logger import get_logger
 from src.models.predictor import TBPredictor
 
@@ -250,6 +252,7 @@ async def save_participant(
     validate_quality: bool = Form(False),
     predictor: TBPredictor = Depends(get_predictor),
     validated_file: UploadFile = Depends(validate_audio_file),
+    db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """Run prediction and save participant record with embedded prediction result."""
     field_errors: Dict[str, str] = {}
@@ -311,11 +314,12 @@ async def save_participant(
             validate_quality,
         )
 
-        store = ParticipantStore()
-        record = store.save(
+        store = ParticipantStore(db)
+        record = await store.save(
             audio_bytes=audio_bytes,
             audio_filename=audio_file.filename or "recording.webm",
             age=age_int,
+            sex=sex.strip().capitalize(),
             cough_duration=dur_int,
             prior_tb_history=to_bool(tb_prior),
             hemoptysis=to_bool(hemoptysis),

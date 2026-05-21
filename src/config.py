@@ -274,6 +274,21 @@ class InferenceConfig(BaseSettings):
     model_config = {"env_prefix": "INFERENCE_"}
 
 
+class DatabaseConfig(BaseSettings):
+    """PostgreSQL connection URL.
+
+    Local docker-compose: postgresql+asyncpg://postgres:postgres@db:5432/tbfusionai
+    Cloud Run + Cloud SQL (unix socket):
+      postgresql+asyncpg://USER:PASS@/DBNAME?host=/cloudsql/PROJECT:REGION:INSTANCE
+    Cloud Run + Cloud SQL (direct IP):
+      postgresql+asyncpg://USER:PASS@IP/DBNAME?ssl=require
+    """
+
+    url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/tbfusionai"
+
+    model_config = {"env_prefix": "DATABASE_"}
+
+
 class APIConfig(BaseSettings):
     """Configuration for FastAPI application."""
 
@@ -314,6 +329,7 @@ class Config:
         self.ensemble = EnsembleConfig()
         self.inference = InferenceConfig()
         self.api = APIConfig()
+        self.database = DatabaseConfig()
         self._create_directories()
 
     def _create_directories(self) -> None:

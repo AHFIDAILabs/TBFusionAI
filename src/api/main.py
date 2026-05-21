@@ -24,6 +24,7 @@ from fastapi.templating import Jinja2Templates
 from src.api.dependencies import get_app_config, get_predictor_optional
 from src.api.routes import router as api_router
 from src.api.schemas import ErrorResponse
+from src.db.init_db import init_db
 from src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -224,6 +225,7 @@ async def startup_event():
     logger.info("=" * 70)
     logger.info("STARTING TBFUSIONAI API")
     logger.info("=" * 70)
+    await init_db()
     logger.info(f"Version: {config.api.app_version}")
     logger.info(f"Docs: http://localhost:{config.api.port}/api/docs")
     logger.info(f"Home: http://localhost:{config.api.port}/")
