@@ -13,13 +13,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 
-# Install CPU-only torch from PyTorch's official index, then the rest of requirements.
-# Splitting the install avoids pip trying to resolve GPU torch variants for other packages.
+# Pre-downloaded CPU-only wheels land here in local dev builds;
+# on Cloud Build the directory is empty and the fallback network path runs instead.
+COPY docker/wheels/ /tmp/wheels/
+
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir \
-        "torch==2.0.1+cpu" \
-        "torchaudio==2.0.2+cpu" \
-        --extra-index-url https://download.pytorch.org/whl/cpu
+    if ls /tmp/wheels/torch-*.whl 2>/dev/null | grep -q .; then \
+        echo ">>> Installing torch from pre-downloaded local wheels" && \
+        pip install --no-cache-dir /tmp/wheels/torch-*.whl; \
+    else \
+        echo ">>> Downloading CPU-only torch from PyTorch index (Cloud Build path)" && \
+        pip install --no-cache-dir \
+            "torch==2.0.1+cpu" \
+            "torchaudio==2.0.2+cpu" \
+            --extra-index-url https://download.pytorch.org/whl/cpu; \
+    fi
 
 RUN grep -vE "^torch(audio)?==" requirements.txt > /tmp/req-no-torch.txt && \
     pip install --no-cache-dir -r /tmp/req-no-torch.txt

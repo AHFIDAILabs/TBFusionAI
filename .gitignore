@@ -71,6 +71,11 @@ artifacts/
 !artifacts/labeled_data/.gitkeep
 !artifacts/reports/.gitkeep
 !artifacts/logs/.gitkeep
+# docker/wheels/ holds pre-downloaded .whl files for local builds (not committed).
+# Un-ignore the directory and .gitkeep so COPY docker/wheels/ works on Cloud Build.
+!docker/wheels/
+docker/wheels/*.whl
+!docker/wheels/.gitkeep
 
 # Logs
 *.log
