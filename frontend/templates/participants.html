@@ -86,8 +86,8 @@
                 <div class="controls-bar">
                     <div class="filter-group">
                         <button class="filter-btn active" data-filter="">All</button>
-                        <button class="filter-btn" data-filter="TB-Positive">TB Positive</button>
-                        <button class="filter-btn" data-filter="TB-Negative">TB Negative</button>
+                        <button class="filter-btn" data-filter="Probable TB">Probable TB</button>
+                        <button class="filter-btn" data-filter="Unlikely TB">Unlikely TB</button>
                     </div>
                     <button class="btn btn-outline" id="exportCsvBtn">
                         <i class="fas fa-download"></i> Export CSV
@@ -207,7 +207,7 @@
         }
 
         function resultBadge(result) {
-            const positive = result === 'TB-Positive';
+            const positive = result === 'Probable TB';
             const cls = positive ? 'badge-positive' : 'badge-negative';
             const icon = positive ? 'fa-virus' : 'fa-shield-virus';
             return `<span class="result-badge ${cls}"><i class="fas ${icon}"></i> ${result}</span>`;
@@ -232,7 +232,7 @@
                     <td>${resultBadge(p.prediction.result)}</td>
                     <td>
                         <div class="prob-bar-wrap">
-                            <div class="prob-bar" style="width:${prob}; background:${p.prediction.result==='TB-Positive'?'#ef4444':'#10b981'}"></div>
+                            <div class="prob-bar" style="width:${prob}; background:${p.prediction.result==='Probable TB'?'#ef4444':'#10b981'}"></div>
                         </div>
                         <span class="prob-label">${prob}</span>
                     </td>
@@ -272,8 +272,8 @@
             try {
                 const [all, pos, neg] = await Promise.all([
                     fetch('/api/v1/participants?limit=1&offset=0').then(r => r.json()),
-                    fetch('/api/v1/participants?limit=1&offset=0&prediction=TB-Positive').then(r => r.json()),
-                    fetch('/api/v1/participants?limit=1&offset=0&prediction=TB-Negative').then(r => r.json()),
+                    fetch('/api/v1/participants?limit=1&offset=0&prediction=Probable+TB').then(r => r.json()),
+                    fetch('/api/v1/participants?limit=1&offset=0&prediction=Unlikely+TB').then(r => r.json()),
                 ]);
                 document.getElementById('statTotal').textContent = all.total;
                 document.getElementById('statPositive').textContent = pos.total;

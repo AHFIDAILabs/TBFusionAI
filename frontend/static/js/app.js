@@ -334,6 +334,9 @@ async function handlePredictionSubmit() {
         return;
     }
 
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.disabled = true;
+
     clearFieldErrors();
     showLoading();
 
@@ -379,6 +382,7 @@ async function handlePredictionSubmit() {
         showNotification(error.message || 'Submission failed. Please try again.', 'error');
     } finally {
         hideLoading();
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 
