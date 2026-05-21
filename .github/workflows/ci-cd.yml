@@ -95,6 +95,9 @@ jobs:
           service: tbfusionai-api
           image: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/tbfusion-repo/api:${{ github.sha }}
           region: us-central1
+          env_vars: |
+            HF_TOKEN=${{ secrets.HF_TOKEN }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
           flags: |
             --allow-unauthenticated
             --memory=4Gi
@@ -102,7 +105,6 @@ jobs:
             --timeout=300
             --concurrency=80
             --add-cloudsql-instances=${{ secrets.CLOUD_SQL_INSTANCE }}
-            --set-env-vars=HF_TOKEN=${{ secrets.HF_TOKEN }},DATABASE_URL=postgresql+asyncpg://postgres:${{ secrets.DB_PASSWORD }}@/tbfusionai?host=/cloudsql/${{ secrets.CLOUD_SQL_INSTANCE }}
 
       - name: Output URL
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
