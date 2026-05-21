@@ -314,6 +314,20 @@ async def save_participant(
             validate_quality,
         )
 
+    except ValueError as e:
+        logger.error(f"Validation error in save_participant: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"Prediction failed in save_participant: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Prediction error: {str(e)}",
+        )
+
+    # DB save is best-effort — a missing/unconfigured DATABASE_URL must not block
+    # the prediction result from reaching the user.
+    record = None
+    try:
         store = ParticipantStore(db)
         record = await store.save(
             audio_bytes=audio_bytes,
@@ -328,20 +342,12 @@ async def save_participant(
             night_sweats=to_bool(night_sweats),
             prediction_result=prediction_result,
         )
-
-        return JSONResponse(
-            content={
-                "participant": record,
-                "prediction": PredictionResponse(**prediction_result).model_dump(),
-            }
-        )
-
-    except ValueError as e:
-        logger.error(f"Validation error in save_participant: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logger.error(f"save_participant failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Save participant error: {str(e)}",
-        )
+        logger.warning(f"Participant DB save skipped (DB unavailable?): {e}")
+
+    return JSONResponse(
+        content={
+            "participant": record,
+            "prediction": PredictionResponse(**prediction_result).model_dump(),
+        }
+    )
