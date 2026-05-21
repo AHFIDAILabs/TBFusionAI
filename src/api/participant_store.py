@@ -4,8 +4,10 @@ Audio bytes are persisted as BYTEA in the database — required for Cloud Run
 where the container filesystem is ephemeral and cannot be relied on for storage.
 """
 
-from typing import Dict
+import uuid
+from typing import Dict, List, Optional, Tuple
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Participant
@@ -75,3 +77,26 @@ class ParticipantStore:
                 "recommendation": participant.recommendation,
             },
         }
+
+    async def list(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        prediction: Optional[str] = None,
+    ) -> Tuple[List[Participant], int]:
+        stmt = select(Participant).order_by(Participant.created_at.desc())
+        count_stmt = select(func.count()).select_from(Participant)
+
+        if prediction:
+            stmt = stmt.where(Participant.prediction == prediction)
+            count_stmt = count_stmt.where(Participant.prediction == prediction)
+
+        total = await self._db.scalar(count_stmt)
+        result = await self._db.execute(stmt.limit(limit).offset(offset))
+        return list(result.scalars().all()), total or 0
+
+    async def get_by_id(self, participant_id: uuid.UUID) -> Optional[Participant]:
+        result = await self._db.execute(
+            select(Participant).where(Participant.id == participant_id)
+        )
+        return result.scalar_one_or_none()

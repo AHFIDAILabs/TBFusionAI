@@ -9,8 +9,9 @@ Defines endpoints for:
 """
 
 import io
+import uuid
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -22,7 +23,11 @@ from src.api.dependencies import (
     get_predictor_optional,
     validate_audio_file,
 )
-from src.api.participant_schemas import ParticipantErrorResponse
+from src.api.participant_schemas import (
+    ParticipantErrorResponse,
+    ParticipantListItem,
+    ParticipantListResponse,
+)
 from src.api.participant_store import ParticipantStore
 from src.api.schemas import (
     AudioMetrics,
@@ -351,3 +356,70 @@ async def save_participant(
             "prediction": PredictionResponse(**prediction_result).model_dump(),
         }
     )
+
+
+def _participant_to_item(p) -> ParticipantListItem:
+    return ParticipantListItem(
+        participantId=str(p.id),
+        timestamp=p.created_at.isoformat(),
+        audioFilename=p.audio_filename,
+        age=p.age,
+        sex=p.sex,
+        coughDuration=p.cough_duration,
+        priorTBHistory=p.prior_tb_history,
+        hemoptysis=p.hemoptysis,
+        weightLoss=p.weight_loss,
+        fever=p.fever,
+        nightSweats=p.night_sweats,
+        prediction={
+            "result": p.prediction,
+            "predictionClass": p.prediction_class,
+            "probability": p.probability,
+            "confidenceLevel": p.confidence_level,
+            "recommendation": p.recommendation,
+        },
+    )
+
+
+@router.get(
+    "/participants",
+    response_model=ParticipantListResponse,
+    summary="List Participants",
+    description="Return a paginated list of saved participant records.",
+)
+async def list_participants(
+    limit: int = 50,
+    offset: int = 0,
+    prediction: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+) -> ParticipantListResponse:
+    """List participants with optional filter by prediction result."""
+    if limit > 200:
+        limit = 200
+    store = ParticipantStore(db)
+    items, total = await store.list(limit=limit, offset=offset, prediction=prediction)
+    return ParticipantListResponse(
+        total=total,
+        limit=limit,
+        offset=offset,
+        items=[_participant_to_item(p) for p in items],
+    )
+
+
+@router.get(
+    "/participants/{participant_id}",
+    response_model=ParticipantListItem,
+    summary="Get Participant",
+    description="Return a single participant record by ID.",
+    responses={404: {"model": ErrorResponse}},
+)
+async def get_participant(
+    participant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> ParticipantListItem:
+    """Fetch a single participant record by UUID."""
+    store = ParticipantStore(db)
+    participant = await store.get_by_id(participant_id)
+    if participant is None:
+        raise HTTPException(status_code=404, detail="Participant not found")
+    return _participant_to_item(participant)

@@ -1,6 +1,6 @@
 """Pydantic schemas for participant records."""
 
-from typing import Dict
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -29,6 +29,32 @@ class ParticipantRecord(BaseModel):
     fever: bool
     nightSweats: bool
     prediction: ParticipantPrediction
+
+
+class ParticipantListItem(BaseModel):
+    """Single participant row returned by the list/detail endpoints."""
+
+    participantId: str
+    timestamp: str
+    audioFilename: str
+    age: int
+    sex: str
+    coughDuration: int
+    priorTBHistory: bool
+    hemoptysis: bool
+    weightLoss: bool
+    fever: bool
+    nightSweats: bool
+    prediction: ParticipantPrediction
+
+
+class ParticipantListResponse(BaseModel):
+    """Paginated list of participant records."""
+
+    total: int
+    limit: int
+    offset: int
+    items: List[ParticipantListItem]
 
 
 class ParticipantErrorResponse(BaseModel):
