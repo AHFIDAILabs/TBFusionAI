@@ -1,0 +1,8 @@
+# Quick-patch layer on top of the existing image.
+# Adds asyncpg + SQLAlchemy and replaces only the changed source files.
+# Use this for local dev while the full rebuild (docker-compose build) runs.
+FROM tbfusionai:latest
+USER root
+RUN pip install --no-cache-dir asyncpg==0.28.0 "SQLAlchemy[asyncio]==2.0.20"
+COPY --chown=appuser:appuser src/ /app/src/
+USER appuser
