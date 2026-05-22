@@ -1473,6 +1473,25 @@ section {
     white-space: nowrap;
 }
 
+/* Play button */
+.play-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-size: 0.75rem;
+}
+.play-btn:hover { background: var(--primary-color); color: #fff; }
+.play-btn.playing { background: var(--primary-color); color: #fff; }
+.play-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Symptom icons */
 .symptoms-cell { white-space: nowrap; }
 .symptom-icon {

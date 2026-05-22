@@ -120,6 +120,7 @@
                                 <th>Result</th>
                                 <th>Probability</th>
                                 <th>Confidence</th>
+                                <th>Audio</th>
                             </tr>
                         </thead>
                         <tbody id="participantsTbody"></tbody>
@@ -237,8 +238,55 @@
                         <span class="prob-label">${prob}</span>
                     </td>
                     <td><span class="confidence-pill">${p.prediction.confidenceLevel}</span></td>
+                    <td><button class="play-btn" data-id="${p.participantId}" title="Play cough recording"><i class="fas fa-play"></i></button></td>
                 </tr>`;
             }).join('');
+
+            tbody.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', () => handlePlayAudio(btn, btn.dataset.id));
+            });
+        }
+
+        let _activeAudio = null;
+        let _activeBtn = null;
+
+        function handlePlayAudio(btn, participantId) {
+            if (_activeAudio && _activeBtn === btn) {
+                if (_activeAudio.paused) {
+                    _activeAudio.play();
+                    btn.innerHTML = '<i class="fas fa-pause"></i>';
+                } else {
+                    _activeAudio.pause();
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                }
+                return;
+            }
+            if (_activeAudio) {
+                _activeAudio.pause();
+                if (_activeBtn) { _activeBtn.innerHTML = '<i class="fas fa-play"></i>'; _activeBtn.classList.remove('playing'); }
+            }
+            const audio = new Audio(`/api/v1/participants/${participantId}/audio`);
+            _activeAudio = audio;
+            _activeBtn = btn;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+            audio.addEventListener('canplay', () => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-pause"></i>';
+                btn.classList.add('playing');
+                audio.play();
+            });
+            audio.addEventListener('ended', () => {
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+                btn.classList.remove('playing');
+                _activeAudio = null; _activeBtn = null;
+            });
+            audio.addEventListener('error', () => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                btn.title = 'Failed to load audio';
+                _activeAudio = null; _activeBtn = null;
+            });
         }
 
         async function loadPage(page, filter) {

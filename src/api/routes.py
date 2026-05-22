@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.dependencies import (
@@ -423,3 +423,35 @@ async def get_participant(
     if participant is None:
         raise HTTPException(status_code=404, detail="Participant not found")
     return _participant_to_item(participant)
+
+
+@router.get(
+    "/participants/{participant_id}/audio",
+    summary="Get Participant Audio",
+    description="Stream the stored cough audio recording for a participant.",
+    responses={404: {"model": ErrorResponse}},
+)
+async def get_participant_audio(
+    participant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Return the raw audio bytes for a participant's cough recording."""
+    store = ParticipantStore(db)
+    participant = await store.get_by_id(participant_id)
+    if participant is None:
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    filename = participant.audio_filename or "recording.webm"
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "webm"
+    media_type = {
+        "wav": "audio/wav",
+        "mp3": "audio/mpeg",
+        "ogg": "audio/ogg",
+        "webm": "audio/webm",
+    }.get(ext, "audio/webm")
+
+    return Response(
+        content=participant.audio_data,
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
