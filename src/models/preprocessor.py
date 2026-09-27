@@ -7,6 +7,7 @@ Contains:
 """
 
 import io
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -58,10 +59,16 @@ class AudioPreprocessor:
 
         try:
             self.processor = Wav2Vec2Processor.from_pretrained(
-                model_name, cache_dir=str(cache_dir), local_files_only=False
+                model_name,
+                cache_dir=str(cache_dir),
+                local_files_only=False,
+                token=os.environ.get("HF_TOKEN"),
             )
             self.model = Wav2Vec2Model.from_pretrained(
-                model_name, cache_dir=str(cache_dir), local_files_only=False
+                model_name,
+                cache_dir=str(cache_dir),
+                local_files_only=False,
+                token=os.environ.get("HF_TOKEN"),
             )
             self.model.eval()
             self.model = self.model.to(self.device)
