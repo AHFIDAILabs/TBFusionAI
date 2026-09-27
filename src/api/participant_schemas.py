@@ -35,6 +35,7 @@ class ParticipantListItem(BaseModel):
     """Single participant row returned by the list/detail endpoints."""
 
     participantId: str
+    patientId: Optional[str] = None
     timestamp: str
     audioFilename: str
     age: int

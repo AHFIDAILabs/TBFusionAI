@@ -7,7 +7,7 @@ where the container filesystem is ephemeral and cannot be relied on for storage.
 import uuid
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import Participant
@@ -33,8 +33,13 @@ class ParticipantStore:
         fever: bool,
         night_sweats: bool,
         prediction_result: Dict,
+        patient_id: Optional[str] = None,
     ) -> Dict:
+        if not patient_id:
+            patient_id = await self._generate_patient_id()
+
         participant = Participant(
+            patient_id=patient_id,
             audio_filename=audio_filename,
             audio_data=audio_bytes,
             age=age,
@@ -60,6 +65,7 @@ class ParticipantStore:
 
         return {
             "participantId": str(participant.id),
+            "patientId": participant.patient_id,
             "timestamp": participant.created_at.isoformat(),
             "age": participant.age,
             "sex": participant.sex,
@@ -77,6 +83,13 @@ class ParticipantStore:
                 "recommendation": participant.recommendation,
             },
         }
+
+    async def _generate_patient_id(self) -> str:
+        result = await self._db.execute(
+            text("SELECT nextval('patient_id_seq')")
+        )
+        num = result.scalar()
+        return f"TB-2026-{num:04d}"
 
     async def list(
         self,

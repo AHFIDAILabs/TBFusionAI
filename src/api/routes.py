@@ -245,6 +245,7 @@ async def get_audio_metrics(
 )
 async def save_participant(
     audio_file: UploadFile = File(..., description="Audio file (WAV, MP3, OGG, WebM)"),
+    patient_id: Optional[str] = Form(None, description="Human-readable patient ID"),
     age: str = Form(..., description="Patient age in years"),
     sex: str = Form(..., description="Patient sex (Male/Female)"),
     reported_cough_dur: str = Form(..., description="Cough duration in days"),
@@ -346,6 +347,7 @@ async def save_participant(
             fever=to_bool(fever),
             night_sweats=to_bool(night_sweats),
             prediction_result=prediction_result,
+            patient_id=patient_id.strip() if patient_id and patient_id.strip() else None,
         )
     except Exception as e:
         logger.warning(f"Participant DB save skipped (DB unavailable?): {e}")
@@ -361,6 +363,7 @@ async def save_participant(
 def _participant_to_item(p) -> ParticipantListItem:
     return ParticipantListItem(
         participantId=str(p.id),
+        patientId=p.patient_id,
         timestamp=p.created_at.isoformat(),
         audioFilename=p.audio_filename,
         age=p.age,
