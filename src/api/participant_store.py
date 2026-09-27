@@ -85,9 +85,7 @@ class ParticipantStore:
         }
 
     async def _generate_patient_id(self) -> str:
-        result = await self._db.execute(
-            text("SELECT nextval('patient_id_seq')")
-        )
+        result = await self._db.execute(text("SELECT nextval('patient_id_seq')"))
         num = result.scalar()
         return f"TB-2026-{num:04d}"
 

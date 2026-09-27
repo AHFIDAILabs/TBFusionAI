@@ -347,7 +347,9 @@ async def save_participant(
             fever=to_bool(fever),
             night_sweats=to_bool(night_sweats),
             prediction_result=prediction_result,
-            patient_id=patient_id.strip() if patient_id and patient_id.strip() else None,
+            patient_id=(
+                patient_id.strip() if patient_id and patient_id.strip() else None
+            ),
         )
     except Exception as e:
         logger.warning(f"Participant DB save skipped (DB unavailable?): {e}")

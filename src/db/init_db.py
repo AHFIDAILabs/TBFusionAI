@@ -19,9 +19,7 @@ async def init_db() -> None:
                     "patient_id VARCHAR(20) UNIQUE"
                 )
             )
-            await conn.execute(
-                text(
-                    """
+            await conn.execute(text("""
                     WITH numbered AS (
                         SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC) AS rn
                         FROM participants
@@ -31,9 +29,7 @@ async def init_db() -> None:
                     SET patient_id = 'TB-2026-' || LPAD(numbered.rn::text, 4, '0')
                     FROM numbered
                     WHERE participants.id = numbered.id
-                    """
-                )
-            )
+                    """))
             await conn.execute(
                 text("CREATE SEQUENCE IF NOT EXISTS patient_id_seq START WITH 45")
             )
