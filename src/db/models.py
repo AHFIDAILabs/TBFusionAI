@@ -21,6 +21,8 @@ class Participant(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+    # Patient identity
+    patient_id: Mapped[str] = mapped_column(String(20), nullable=True, unique=True)
 
     # Audio
     audio_filename: Mapped[str] = mapped_column(String, nullable=False)

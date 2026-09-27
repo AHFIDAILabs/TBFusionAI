@@ -93,6 +93,14 @@
                                 </h3>
                                 
                                 <div class="form-row">
+                                    <div class="form-group full-width">
+                                        <label for="patientId">Patient ID</label>
+                                        <input type="text" id="patientId" name="patient_id" maxlength="20" placeholder="Auto-generated on save (e.g. TB-2026-0045)">
+                                        <p style="color:#6b7280;font-size:0.8rem;margin-top:0.25rem;">Leave blank to auto-assign, or enter a custom ID</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
                                     <div class="form-group">
                                         <label for="age">Age *</label>
                                         <input type="number" id="age" name="age" min="1" max="120" required>
