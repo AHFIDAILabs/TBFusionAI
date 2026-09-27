@@ -112,6 +112,7 @@
                         <thead>
                             <tr>
                                 <th>#</th>
+                                <th>Patient ID</th>
                                 <th>Date / Time</th>
                                 <th>Age</th>
                                 <th>Sex</th>
@@ -225,6 +226,7 @@
                 const prob = (p.prediction.probability * 100).toFixed(1) + '%';
                 return `<tr>
                     <td class="row-num">${rowNum}</td>
+                    <td>${p.patientId || '—'}</td>
                     <td>${formatDate(p.timestamp)}</td>
                     <td>${p.age}</td>
                     <td>${p.sex}</td>
