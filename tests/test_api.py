@@ -9,6 +9,7 @@ Tests:
 """
 
 import io
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import status
@@ -91,8 +92,21 @@ class TestPredictionEndpoints:
             status.HTTP_503_SERVICE_UNAVAILABLE,
         ]
 
+    @patch(
+        "src.models.preprocessor.Wav2Vec2Processor.from_pretrained",
+        return_value=MagicMock(),
+    )
+    @patch(
+        "src.models.preprocessor.Wav2Vec2Model.from_pretrained",
+        return_value=MagicMock(),
+    )
     def test_predict_with_valid_audio(
-        self, api_client, sample_prediction_form_data, sample_audio_bytes
+        self,
+        mock_model,
+        mock_processor,
+        api_client,
+        sample_prediction_form_data,
+        sample_audio_bytes,
     ):
         """Test prediction with valid audio file and environment check."""
         audio_file = io.BytesIO(sample_audio_bytes)
