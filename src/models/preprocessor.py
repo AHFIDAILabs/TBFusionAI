@@ -62,13 +62,11 @@ class AudioPreprocessor:
                 model_name,
                 cache_dir="/app/.cache/huggingface/hub",
                 local_files_only=False,
-                token=os.environ.get("HF_TOKEN"),
             )
             self.model = Wav2Vec2Model.from_pretrained(
                 model_name,
                 cache_dir="/app/.cache/huggingface/hub",
                 local_files_only=False,
-                token=os.environ.get("HF_TOKEN"),
             )
             self.model.eval()
             self.model = self.model.to(self.device)
